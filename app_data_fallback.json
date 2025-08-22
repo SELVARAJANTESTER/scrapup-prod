@@ -1,0 +1,29 @@
+{
+  "scrapTypes": [
+    {"id": 1, "name": "Metal Scrap", "pricePerKg": 25, "category": "Metal", "description": "Iron, steel, aluminum, copper"},
+    {"id": 2, "name": "Plastic Bottles", "pricePerKg": 12, "category": "Plastic", "description": "PET bottles, containers"},
+    {"id": 3, "name": "Paper & Cardboard", "pricePerKg": 8, "category": "Paper", "description": "Newspapers, magazines, boxes"},
+    {"id": 4, "name": "Electronics", "pricePerKg": 45, "category": "E-waste", "description": "Old phones, computers, cables"},
+    {"id": 5, "name": "Glass", "pricePerKg": 5, "category": "Glass", "description": "Bottles, jars, windows"},
+    {"id": 6, "name": "Textiles", "pricePerKg": 15, "category": "Textile", "description": "Old clothes, fabrics"}
+  ],
+  "dealers": [
+    {"id": 1, "name": "Green City Recycling", "phone": "9876543210", "email": "contact@greencityrecycle.com", "serviceAreas": ["Northside", "Central"], "rating": 4.8, "specialties": ["Metal", "Electronics"], "active": true, "completedJobs": 245},
+    {"id": 2, "name": "EcoLoop Solutions", "phone": "9876543211", "email": "service@ecoloop.com", "serviceAreas": ["Southside", "Eastside"], "rating": 4.6, "specialties": ["Plastic", "Paper"], "active": true, "completedJobs": 189},
+    {"id": 3, "name": "Metro Scrap Services", "phone": "9876543212", "email": "hello@metroscrap.com", "serviceAreas": ["Westside", "Central"], "rating": 4.7, "specialties": ["All Types"], "active": true, "completedJobs": 312},
+    {"id": 4, "name": "Urban Reclaim", "phone": "9876543213", "email": "support@urbanreclaim.com", "serviceAreas": ["Downtown"], "rating": 4.5, "specialties": ["Glass", "Textiles"], "active": true, "completedJobs": 134},
+    {"id": 5, "name": "RenewWaste Co.", "phone": "9876543214", "email": "info@renewwaste.co", "serviceAreas": ["Uptown"], "rating": 4.4, "specialties": ["Paper", "Plastic"], "active": true, "completedJobs": 98}
+  ],
+  "requests": [],
+  "users": [
+    {"id": 9101, "name": "System Admin", "phone": "9000000001", "role": "admin"},
+    {"id": 9102, "name": "Operations Admin", "phone": "9000000002", "role": "admin"},
+    {"id": 9201, "name": "Green City Depot", "phone": "9876543210", "role": "dealer", "dealerId": 1},
+    {"id": 9202, "name": "EcoLoop Depot", "phone": "9876543211", "role": "dealer", "dealerId": 2},
+    {"id": 9203, "name": "Metro Scrap Depot", "phone": "9876543212", "role": "dealer", "dealerId": 3},
+    {"id": 9204, "name": "Urban Reclaim Depot", "phone": "9876543213", "role": "dealer", "dealerId": 4},
+    {"id": 9205, "name": "RenewWaste Depot", "phone": "9876543214", "role": "dealer", "dealerId": 5},
+    {"id": 9301, "name": "Arjun Mehta", "phone": "8000000001", "role": "customer"},
+    {"id": 9302, "name": "Neha Kapoor", "phone": "8000000002", "role": "customer"}
+  ]
+}
