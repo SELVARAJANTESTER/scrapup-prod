@@ -1,0 +1,35 @@
+﻿# Node
+node_modules/
+npm-debug.log*
+package-lock.json
+yarn.lock
+
+# Logs
+logs
+*.log
+server.log
+
+# Runtime files
+.env
+.env.local
+.env.*.local
+
+# Firebase service account (sensitive)
+firebase-service-account.json
+*.key
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
+
+# Build / deploy
+dist/
+build/
+
+# Optional: ignore local data dumps
+*.sqlite
+
+# Keep the fallback data in repo intentionally (uncomment to ignore)
+# app_data_fallback.json
