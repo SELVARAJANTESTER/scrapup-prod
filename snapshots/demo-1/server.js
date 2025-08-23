@@ -88,87 +88,6 @@ async function getCollectionData(collectionName) {
   }
 }
 
-// Ensure fallback data items have stable ids so client can reference them reliably.
-// This will mutate fallbackData in-memory and persist it back to app_data_fallback.json if any ids were added.
-function ensureFallbackIds(collectionName) {
-  try {
-    fallbackData[collectionName] = fallbackData[collectionName] || [];
-    // compute max numeric id present
-    let maxId = fallbackData[collectionName].reduce((m, x) => {
-      const n = Number(x && x.id);
-      return (!isNaN(n) && isFinite(n)) ? Math.max(m, n) : m;
-    }, 0);
-    let changed = false;
-    for (let i = 0; i < fallbackData[collectionName].length; i++) {
-      const item = fallbackData[collectionName][i];
-      if (item && (item.id === undefined || item.id === null || item.id === '')) {
-        maxId += 1;
-        item.id = String(maxId);
-        changed = true;
-      }
-    }
-    if (changed) {
-      try { fs.writeFileSync(path.join(__dirname, 'app_data_fallback.json'), JSON.stringify(fallbackData, null, 2)); } catch (e) { console.warn('Failed to persist fallback id changes', e && e.message); }
-    }
-  } catch (e) { console.warn('ensureFallbackIds failed', e && e.message); }
-}
-
-// Pre-normalize known collections in fallback data at startup
-try { ensureFallbackIds('scrapTypes'); ensureFallbackIds('dealers'); ensureFallbackIds('requests'); ensureFallbackIds('users'); } catch(e) {}
-
-// Remove duplicate dealers in fallbackData based on normalized phone numbers.
-// Keeps the first occurrence and reassigns user.dealerId references to the kept dealer.
-function dedupeFallbackDealers() {
-  try {
-    fallbackData.dealers = fallbackData.dealers || [];
-    const seen = Object.create(null);
-    const deduped = [];
-    const moved = [];
-    for (const item of fallbackData.dealers) {
-      const phone = normalizePhone10(item && item.phone) || String(item && item.phone || '');
-      if (!phone) {
-        // keep items without valid phone as-is
-        deduped.push(item);
-        continue;
-      }
-      if (!seen[phone]) {
-        // ensure phone stored as normalized
-        item.phone = phone;
-        seen[phone] = item;
-        deduped.push(item);
-      } else {
-        // duplicate: record for reassignment then drop
-        moved.push({ from: item, to: seen[phone] });
-      }
-    }
-    if (moved.length) {
-      // Reassign users that pointed to duplicate dealer ids
-      try {
-        fallbackData.users = fallbackData.users || [];
-        for (const m of moved) {
-          const fromId = String(m.from.id);
-          const toId = String(m.to.id);
-          for (const u of fallbackData.users) {
-            if (String(u.dealerId) === fromId) {
-              u.dealerId = toId;
-            }
-            // also if user phone matched duplicate phone, ensure dealerId is set
-            const uphone = normalizePhone10(u && u.phone) || String(u && u.phone || '');
-            if (uphone && uphone === m.to.phone) {
-              u.dealerId = toId;
-              u.role = u.role || 'dealer';
-            }
-          }
-        }
-      } catch (e) { console.warn('failed to reassign users during dealer dedupe', e && e.message); }
-      fallbackData.dealers = deduped;
-      try { fs.writeFileSync(path.join(__dirname, 'app_data_fallback.json'), JSON.stringify(fallbackData, null, 2)); } catch (e) { console.warn('failed to persist fallback dedupe', e && e.message); }
-    }
-  } catch (e) { console.warn('dedupeFallbackDealers failed', e && e.message); }
-}
-
-try { dedupeFallbackDealers(); } catch(e) {}
-
 // normalize phone to last 10 digits (string of digits only)
 function normalizePhone10(phone) {
   if (!phone) return null;
@@ -364,11 +283,6 @@ app.post('/api/dealers', requireAdmin, async (req, res) => {
     d.phone = normalizePhone10(d.phone || '');
     d.createdAt = Date.now();
     if (db) {
-      // Ensure phone is unique among dealers
-      if (d.phone) {
-        const dup = await db.collection('dealers').where('phone', '==', d.phone).limit(1).get();
-        if (!dup.empty) return res.status(409).json({ error: 'dealer with this phone already exists' });
-      }
       const ref = await db.collection('dealers').add(d);
       d.id = ref.id;
       // Ensure there is a user account for this dealer
@@ -387,11 +301,6 @@ app.post('/api/dealers', requireAdmin, async (req, res) => {
       return res.json(d);
     } else {
       fallbackData.dealers = fallbackData.dealers || [];
-      // Check for duplicate by normalized phone and reject with 409
-      if (d.phone) {
-        const existing = (fallbackData.dealers || []).find(x => normalizePhone10(x && x.phone) === d.phone);
-        if (existing) return res.status(409).json({ error: 'dealer with this phone already exists', existing });
-      }
       d.id = (fallbackData.dealers.reduce((m, x) => Math.max(m, Number(x.id || 0)), 0) + 1).toString();
       fallbackData.dealers.push(d);
       // ensure a corresponding user exists or is updated
@@ -421,14 +330,6 @@ app.put('/api/dealers/:id', requireAdmin, async (req, res) => {
     const payload = req.body;
     if (payload.phone) payload.phone = normalizePhone10(payload.phone);
     if (db) {
-      // If phone is being updated, ensure uniqueness among dealers (excluding this id)
-      if (payload.phone) {
-        const snap = await db.collection('dealers').where('phone', '==', payload.phone).limit(1).get();
-        if (!snap.empty) {
-          const doc = snap.docs[0];
-          if (doc.id !== id) return res.status(409).json({ error: 'another dealer with this phone already exists' });
-        }
-      }
       await db.collection('dealers').doc(id).set(payload, { merge: true });
       const doc = await db.collection('dealers').doc(id).get();
       // if phone changed, update corresponding user
@@ -453,11 +354,6 @@ app.put('/api/dealers/:id', requireAdmin, async (req, res) => {
       fallbackData.dealers = fallbackData.dealers || [];
       const idx = fallbackData.dealers.findIndex(x => String(x.id) === String(id));
       if (idx === -1) return res.status(404).json({ error: 'not found' });
-      // If updating phone, verify no other dealer uses it
-      if (payload.phone) {
-        const dup = fallbackData.dealers.find(x => String(x.id) !== String(id) && normalizePhone10(x && x.phone) === payload.phone);
-        if (dup) return res.status(409).json({ error: 'another dealer with this phone already exists', dup });
-      }
       const old = fallbackData.dealers[idx];
       fallbackData.dealers[idx] = Object.assign({}, fallbackData.dealers[idx], payload);
       // sync user record if phone changed

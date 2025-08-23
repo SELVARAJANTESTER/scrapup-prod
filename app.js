@@ -72,6 +72,20 @@ class ScrapCollectApp {
         this.showView('roleSelection');
     }
 
+    // Resolve an absolute API base to use for fetch calls. Prefer explicit window.__SCRAP_API_BASE,
+    // then same-origin host, otherwise fall back to localhost:3000 for local development.
+    getApiBase() {
+        try {
+            if (window && window.__SCRAP_API_BASE && String(window.__SCRAP_API_BASE).trim()) {
+                return String(window.__SCRAP_API_BASE).replace(/\/+$/, '');
+            }
+            if (window && window.location && window.location.host) {
+                return window.location.protocol + '//' + window.location.host;
+            }
+        } catch (e) {}
+        return 'http://localhost:3000';
+    }
+
     // --- Authentication (phone-based simple) ---
     initAuthListeners() {
     const loginBtn = document.getElementById('loginBtn');
@@ -81,7 +95,7 @@ class ScrapCollectApp {
     }
 
     async login() {
-        const phoneInput = document.getElementById('loginPhone');
+    const phoneInput = document.getElementById('loginPhone');
         if (!phoneInput) return;
     let phone = phoneInput.value && phoneInput.value.trim();
     if (!phone) { this.showToast('Enter phone number to login', 'error'); return; }
@@ -91,11 +105,12 @@ class ScrapCollectApp {
     phone = digits.slice(-10);
         // Call server to fetch or create user
         try {
-            const res = await fetch(`/api/users?phone=${encodeURIComponent(phone)}`);
+            const base = this.getApiBase();
+            const res = await fetch(base + `/api/users?phone=${encodeURIComponent(phone)}`);
             let user = null;
             if (res.ok) user = await res.json();
             if (!user) {
-                const create = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+                const create = await fetch(base + '/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
                 user = await create.json();
             }
             this.currentUser = user;
@@ -324,6 +339,80 @@ class ScrapCollectApp {
         });
     }
 
+    // Modal-based dealer edit/save: open modal with dealer data
+    openDealerModal(dealer) {
+        try {
+            const modal = document.getElementById('dealerEditModal');
+            if (!modal) return;
+            document.getElementById('modalDealerTitle').textContent = dealer && dealer.id ? 'Edit Dealer' : 'Add Dealer';
+            document.getElementById('modalDealerName').value = dealer ? (dealer.name || '') : '';
+            document.getElementById('modalDealerPhone').value = dealer ? (dealer.phone || '') : '';
+            document.getElementById('modalDealerEmail').value = dealer ? (dealer.email || '') : '';
+            document.getElementById('modalDealerServiceAreas').value = dealer && dealer.serviceAreas ? (Array.isArray(dealer.serviceAreas) ? dealer.serviceAreas.join(', ') : dealer.serviceAreas) : '';
+            document.getElementById('modalDealerSpecialties').value = dealer && dealer.specialties ? (Array.isArray(dealer.specialties) ? dealer.specialties.join(', ') : dealer.specialties) : '';
+            document.getElementById('modalDealerActive').value = (dealer && typeof dealer.active !== 'undefined') ? String(!!dealer.active) : 'true';
+            document.getElementById('modalDealerRatingInput').value = dealer && typeof dealer.rating !== 'undefined' ? dealer.rating : '';
+            document.getElementById('modalDealerCompletedJobs').value = dealer && typeof dealer.completedJobs !== 'undefined' ? dealer.completedJobs : '';
+            modal.setAttribute('data-edit-id', dealer && dealer.id ? dealer.id : '');
+            // clear success message
+            document.getElementById('modalDealerSuccess').style.display = 'none';
+            modal.classList.remove('hidden');
+        } catch (e) { console.warn('openDealerModal failed', e); }
+    }
+
+    closeDealerModal() {
+        try { const modal = document.getElementById('dealerEditModal'); if (modal) modal.classList.add('hidden'); } catch(e){}
+    }
+
+    async saveDealerModal() {
+        try {
+            const modal = document.getElementById('dealerEditModal'); if (!modal) return;
+            const id = modal.getAttribute('data-edit-id');
+            const name = document.getElementById('modalDealerName').value;
+            const phoneRaw = document.getElementById('modalDealerPhone').value;
+            const phone = (window.__normalizePhone10 ? window.__normalizePhone10(phoneRaw) : phoneRaw);
+            const email = document.getElementById('modalDealerEmail').value;
+            const serviceAreasRaw = document.getElementById('modalDealerServiceAreas').value || '';
+            const specialtiesRaw = document.getElementById('modalDealerSpecialties').value || '';
+            const active = document.getElementById('modalDealerActive').value === 'true';
+            const rating = parseFloat(document.getElementById('modalDealerRatingInput').value) || 0;
+            const completedJobs = parseInt(document.getElementById('modalDealerCompletedJobs').value) || 0;
+            const payload = { name, phone, email, serviceAreas: serviceAreasRaw ? serviceAreasRaw.split(',').map(s => s.trim()).filter(Boolean) : [], specialties: specialtiesRaw ? specialtiesRaw.split(',').map(s => s.trim()).filter(Boolean) : [], active, rating, completedJobs };
+            const token = (window.__getAuthToken && window.__getAuthToken()) || null;
+            const headers = { 'Content-Type':'application/json' };
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            const opts = { method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(payload) };
+            const base = this.getApiBase();
+            const path = base + (id ? `/api/dealers/${id}` : '/api/dealers');
+            const saveBtn = document.getElementById('modalDealerSave');
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.dataset._oldText = saveBtn.textContent; saveBtn.textContent = 'Saving...'; }
+            const res = await fetch(path, opts);
+            if (!res.ok) {
+                const txt = await res.text();
+                if (res.status === 409) {
+                    let msg = 'Dealer already exists';
+                    try { const parsed = JSON.parse(txt || '{}'); if (parsed && parsed.error) msg = parsed.error; } catch(e){}
+                    // show inline message in modal
+                    const successEl = document.getElementById('modalDealerSuccess'); successEl.style.display = 'block'; successEl.style.color = 'var(--color-error)'; successEl.textContent = msg;
+                    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtn.dataset._oldText || 'Save'; }
+                    return;
+                }
+                throw new Error(txt || 'Save failed');
+            }
+            await res.json();
+            // show success message briefly, refresh list with flash
+            const successEl = document.getElementById('modalDealerSuccess'); successEl.style.display = 'block'; successEl.style.color = 'var(--color-app-secondary)'; successEl.textContent = 'Saved successfully';
+            await this.loadDealers();
+            // flash the new list container
+            try { const list = document.getElementById('dealersList'); if (list) { list.classList.add('flash'); setTimeout(() => list.classList.remove('flash'), 600); } } catch(e){}
+            setTimeout(() => { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtn.dataset._oldText || 'Save'; } this.closeDealerModal(); }, 600);
+        } catch (e) {
+            console.warn('saveDealerModal failed', e);
+            try { const successEl = document.getElementById('modalDealerSuccess'); successEl.style.display = 'block'; successEl.style.color = 'var(--color-error)'; successEl.textContent = 'Failed to save'; } catch(e){}
+            const saveBtn = document.getElementById('modalDealerSave'); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtn.dataset._oldText || 'Save'; }
+        }
+    }
+
     setupModalHandlers() {
         const modalCancel = document.getElementById('modalCancel');
         const modalConfirm = document.getElementById('modalConfirm');
@@ -350,6 +439,17 @@ class ScrapCollectApp {
                     this.hideModal();
                 }
             });
+        }
+
+        // Dealer edit modal handlers
+        const dealerModal = document.getElementById('dealerEditModal');
+        if (dealerModal) {
+            const saveBtn = document.getElementById('modalDealerSave');
+            const cancelBtn = document.getElementById('modalDealerCancel');
+            if (saveBtn) saveBtn.addEventListener('click', (e) => { e.preventDefault(); this.saveDealerModal(); });
+            if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.preventDefault(); this.closeDealerModal(); });
+            // close on overlay click
+            dealerModal.addEventListener('click', (e) => { if (e.target.classList.contains('modal-overlay')) this.closeDealerModal(); });
         }
     }
 
@@ -381,7 +481,8 @@ class ScrapCollectApp {
                 try {
                     const headers = {};
                     try { if (window.__getAuthToken) { const t = window.__getAuthToken(); if (t) headers['Authorization'] = 'Bearer ' + t; } } catch(e){}
-                    const res = await fetch('/api/users?phone=' + encodeURIComponent(this.currentUser.phone), { headers });
+                    const base = this.getApiBase();
+                    const res = await fetch(base + '/api/users?phone=' + encodeURIComponent(this.currentUser.phone), { headers });
                     if (res && res.ok) {
                         const fresh = await res.json();
                         if (fresh) {
@@ -500,11 +601,12 @@ class ScrapCollectApp {
             const digits = String(phone || '').replace(/\D/g, '');
             if (digits.length < 10) { this.showToast('Phone must contain at least 10 digits', 'error'); return; }
             phone = digits.slice(-10);
-            const res = await fetch('/api/users?phone=' + encodeURIComponent(phone));
+            const base = this.getApiBase();
+            const res = await fetch(base + '/api/users?phone=' + encodeURIComponent(phone));
             let user = null;
             if (res.ok) user = await res.json();
             if (!user) {
-                const create = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+                const create = await fetch(base + '/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
                 if (!create.ok) throw new Error('Create user failed');
                 user = await create.json();
             }
@@ -538,7 +640,8 @@ class ScrapCollectApp {
     // helper to test logging in all fallback users (useful during dev)
     async testLoginAllUsers() {
         try {
-            const res = await fetch('/api/users?phone=');
+            const base = this.getApiBase();
+            const res = await fetch(base + '/api/users?phone=');
             // if API doesn't return list, use fallback data
             // We'll just iterate known phones in fallback file via app_data_fallback.json if accessible
             const fallback = await fetch('/app_data_fallback.json').then(r => r.json()).catch(() => null);
@@ -676,20 +779,26 @@ class ScrapCollectApp {
             btn.textContent = 'Getting Location...';
         }
 
-        setTimeout(() => {
-            const randomLocation = this.locations[Math.floor(Math.random() * this.locations.length)];
-            this.currentLocation = {
-                lat: randomLocation.lat + (Math.random() - 0.5) * 0.01,
-                lng: randomLocation.lng + (Math.random() - 0.5) * 0.01
-            };
-
-            if (coordinates) {
-                coordinates.textContent = `${this.currentLocation.lat.toFixed(4)}, ${this.currentLocation.lng.toFixed(4)}`;
-            }
+        const onSuccess = (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            this.currentLocation = { lat, lng };
+            if (coordinates) coordinates.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
             if (display) {
                 display.classList.remove('hidden');
+                // render a simple map iframe (use Google Maps search link)
+                const mapContainerId = 'currentLocationMap';
+                let mapEl = document.getElementById(mapContainerId);
+                if (!mapEl) {
+                    mapEl = document.createElement('div');
+                    mapEl.id = mapContainerId;
+                    mapEl.style.marginTop = '8px';
+                    mapEl.style.height = '200px';
+                    mapEl.style.borderRadius = '6px';
+                    display.appendChild(mapEl);
+                }
+                mapEl.innerHTML = `<iframe width="100%" height="200" frameborder="0" style="border:0" src="https://www.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed" allowfullscreen></iframe>`;
             }
-            
             if (btn) {
                 btn.classList.remove('loading');
                 btn.textContent = '📍 Location Captured';
@@ -697,9 +806,50 @@ class ScrapCollectApp {
                 btn.style.background = 'var(--color-app-success)';
                 btn.style.color = 'white';
             }
-
             this.showToast('Location captured successfully!', 'success');
-        }, 2000);
+        };
+
+        const onError = (err) => {
+            console.warn('Geolocation failed, falling back to random location', err);
+            // fallback: pick a nearby random location from predefined list
+            const randomLocation = this.locations[Math.floor(Math.random() * this.locations.length)];
+            this.currentLocation = {
+                lat: randomLocation.lat + (Math.random() - 0.5) * 0.01,
+                lng: randomLocation.lng + (Math.random() - 0.5) * 0.01
+            };
+            if (coordinates) coordinates.textContent = `${this.currentLocation.lat.toFixed(6)}, ${this.currentLocation.lng.toFixed(6)}`;
+            if (display) {
+                display.classList.remove('hidden');
+                const mapContainerId = 'currentLocationMap';
+                let mapEl = document.getElementById(mapContainerId);
+                if (!mapEl) {
+                    mapEl = document.createElement('div');
+                    mapEl.id = mapContainerId;
+                    mapEl.style.marginTop = '8px';
+                    mapEl.style.height = '200px';
+                    mapEl.style.borderRadius = '6px';
+                    display.appendChild(mapEl);
+                }
+                const lat = this.currentLocation.lat;
+                const lng = this.currentLocation.lng;
+                mapEl.innerHTML = `<iframe width="100%" height="200" frameborder="0" style="border:0" src="https://www.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed" allowfullscreen></iframe>`;
+            }
+            if (btn) {
+                btn.classList.remove('loading');
+                btn.textContent = '📍 Location Captured';
+                btn.disabled = true;
+                btn.style.background = 'var(--color-app-success)';
+                btn.style.color = 'white';
+            }
+            this.showToast('Location captured (approx) — geolocation not available', 'info');
+        };
+
+        if (navigator && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(onSuccess, onError, { enableHighAccuracy: true, timeout: 8000 });
+        } else {
+            // no geolocation API
+            onError(new Error('Geolocation not supported'));
+        }
     }
 
     addScrapItem() {
@@ -846,7 +996,17 @@ class ScrapCollectApp {
     }
 
     initDealerView() {
-        const dealerId = 1;
+        // Determine the dealer id for the current dealer user. Prefer the logged-in user's dealerId.
+        let dealerId = 1;
+        try {
+            if (this.currentUser && (this.currentUser.dealerId || this.currentUser.dealerId === 0)) {
+                dealerId = Number(this.currentUser.dealerId) || dealerId;
+            } else if (this.dealers && this.dealers.length) {
+                // fallback: if dealers list exists, pick the first active dealer as default
+                const first = this.dealers.find(d => d && d.id != null);
+                if (first) dealerId = Number(first.id) || dealerId;
+            }
+        } catch (e) { /* ignore and use default */ }
         this.currentDealerId = dealerId;
         this.renderDealerDashboard(dealerId);
     }
@@ -855,7 +1015,7 @@ class ScrapCollectApp {
         const dealer = this.dealers.find(d => d.id === dealerId);
         if (!dealer) return;
 
-        const assignedRequests = this.requests.filter(r => r.dealerId === dealerId);
+    const assignedRequests = (this.requests || []).filter(r => String(r.dealerId) === String(dealerId));
         const pendingRequests = assignedRequests.filter(r => r.status === 'Assigned').length;
         
         const pendingElement = document.getElementById('pendingRequests');
@@ -1091,28 +1251,34 @@ class ScrapCollectApp {
     renderDealersList() {
         const container = document.getElementById('dealersList');
         if (!container) return;
-        
-        container.innerHTML = this.dealers.map(dealer => `
+        container.innerHTML = this.dealers.map(dealer => {
+            const phone = dealer.phone || '';
+            const email = dealer.email || '';
+            const serviceAreas = Array.isArray(dealer.serviceAreas) ? dealer.serviceAreas.join(', ') : (dealer.serviceAreas || '');
+            const specialties = dealer.specialties || [];
+            const rating = (typeof dealer.rating !== 'undefined' && dealer.rating !== null) ? Number(dealer.rating).toFixed(1) : '';
+            return `
             <div class="dealer-card">
                 <div class="dealer-header-info">
                     <div>
-                        <div class="dealer-name">${dealer.name}</div>
-                        <div class="dealer-info">📞 ${dealer.phone}</div>
-                        <div class="dealer-info">📧 ${dealer.email}</div>
-                        <div class="dealer-info">📍 ${dealer.serviceAreas ? dealer.serviceAreas.join(', ') : ''}</div>
+                        <div class="dealer-name">${dealer.name || 'Unnamed Dealer'}</div>
+                        <div class="dealer-info">📞 ${phone}</div>
+                        <div class="dealer-info">📧 ${email}</div>
+                        <div class="dealer-info">📍 ${serviceAreas}</div>
                         <div class="dealer-info">✅ ${dealer.completedJobs || 0} completed jobs</div>
                     </div>
-                    <div class="dealer-rating">⭐ ${dealer.rating || 0}</div>
+                    <div class="dealer-rating">${rating ? `⭐ ${rating}` : ''}</div>
                 </div>
                 <div class="dealer-specialties">
-                    ${ (dealer.specialties || []).map(spec => `<span class="specialty-tag">${spec}</span>`).join('')}
+                    ${specialties.map(spec => `<span class="specialty-tag">${spec}</span>`).join('')}
                 </div>
-                <div style="margin-top:8px;">
+                <div style="margin-top:12px; display:flex; gap:8px;">
                     <button class="btn btn--outline" data-dealer-edit="${dealer.id}">Edit</button>
                     <button class="btn btn--danger" data-dealer-delete="${dealer.id}">Delete</button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
         
         // wire edit/delete for admin view
         container.querySelectorAll('[data-dealer-edit]').forEach(b => b.addEventListener('click', (e) => {
@@ -1128,8 +1294,9 @@ class ScrapCollectApp {
     // Admin loaders and forms
     async loadDealers() {
         try {
-            const res = await fetch('/api/dealers');
-            const data = res.ok ? await res.json() : [];
+            const base = this.getApiBase();
+            const res = await fetch(base + '/api/dealers');
+            const data = res && res.ok ? await res.json() : [];
             // update local cache and render
             this.dealers = data;
             this.renderDealersList();
@@ -1141,10 +1308,19 @@ class ScrapCollectApp {
         if (!form) return;
         document.getElementById('dealerFormTitle').innerText = d ? 'Edit Dealer' : 'Add Dealer';
         document.getElementById('dealerName').value = d ? d.name : '';
-        document.getElementById('dealerPhone').value = d ? d.phone : '';
-        document.getElementById('dealerEmail').value = d ? d.email || '' : '';
-        form.setAttribute('data-edit-id', d && d.id ? d.id : '');
-        form.classList.remove('hidden');
+    document.getElementById('dealerPhone').value = d ? (d.phone || '') : '';
+    document.getElementById('dealerEmail').value = d ? d.email || '' : '';
+    document.getElementById('dealerServiceAreas').value = d && d.serviceAreas ? (Array.isArray(d.serviceAreas) ? d.serviceAreas.join(', ') : d.serviceAreas) : '';
+    document.getElementById('dealerSpecialties').value = d && d.specialties ? (Array.isArray(d.specialties) ? d.specialties.join(', ') : d.specialties) : '';
+    document.getElementById('dealerActive').value = (d && typeof d.active !== 'undefined') ? String(!!d.active) : 'true';
+    document.getElementById('dealerRatingInput').value = d && typeof d.rating !== 'undefined' ? d.rating : '';
+    document.getElementById('dealerCompletedJobs').value = d && typeof d.completedJobs !== 'undefined' ? d.completedJobs : '';
+    form.setAttribute('data-edit-id', d && d.id ? d.id : '');
+    // keep a copy of loaded phone to help with server-side user sync when the phone changes
+    form._loadedPhone = d && d.phone ? (window.__normalizePhone10 ? window.__normalizePhone10(d.phone) : d.phone) : null;
+    // clear inline phone error when opening form
+    try { const perr = document.getElementById('dealerPhoneError'); if (perr) { perr.textContent = ''; perr.style.display = 'none'; } } catch(e){}
+    form.classList.remove('hidden');
     }
 
     hideDealerForm() { const f = document.getElementById('dealerForm'); if (f) f.classList.add('hidden'); }
@@ -1155,19 +1331,44 @@ class ScrapCollectApp {
         const saveBtn = form.querySelector('[data-admin-action="saveDealer"]');
         if (saveBtn) { saveBtn.disabled = true; saveBtn.dataset._oldText = saveBtn.textContent; saveBtn.textContent = 'Saving...'; }
         const id = form.getAttribute('data-edit-id');
-        const payload = { name: document.getElementById('dealerName').value, phone: (window.__normalizePhone10 ? window.__normalizePhone10(document.getElementById('dealerPhone').value) : document.getElementById('dealerPhone').value), email: document.getElementById('dealerEmail').value };
+        const name = document.getElementById('dealerName').value;
+        const phoneRaw = document.getElementById('dealerPhone').value;
+        const phone = (window.__normalizePhone10 ? window.__normalizePhone10(phoneRaw) : phoneRaw);
+        const email = document.getElementById('dealerEmail').value;
+        const serviceAreasRaw = document.getElementById('dealerServiceAreas').value || '';
+        const specialtiesRaw = document.getElementById('dealerSpecialties').value || '';
+        const active = document.getElementById('dealerActive').value === 'true';
+        const rating = parseFloat(document.getElementById('dealerRatingInput').value) || 0;
+        const completedJobs = parseInt(document.getElementById('dealerCompletedJobs').value) || 0;
+        const payload = { name, phone, email, serviceAreas: serviceAreasRaw ? serviceAreasRaw.split(',').map(s => s.trim()).filter(Boolean) : [], specialties: specialtiesRaw ? specialtiesRaw.split(',').map(s => s.trim()).filter(Boolean) : [], active, rating, completedJobs };
+        // include old phone to help server-side user sync when updating
+        if (id) payload._oldPhone = (form._loadedPhone || null) || null;
         const token = (window.__getAuthToken && window.__getAuthToken()) || null;
         const headers = { 'Content-Type':'application/json' };
         if (token) headers['Authorization'] = 'Bearer ' + token;
         const opts = { method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(payload) };
-        const path = id ? `/api/dealers/${id}` : '/api/dealers';
+        const base = this.getApiBase();
+        const path = base + (id ? `/api/dealers/${id}` : '/api/dealers');
         try {
             const res = await fetch(path, opts);
             if (!res.ok) {
                 const txt = await res.text();
+                // If server signals a conflict (duplicate phone), show a friendly message
+                if (res.status === 409) {
+            let msg = 'Dealer already exists';
+            try { const parsed = JSON.parse(txt || '{}'); if (parsed && parsed.error) msg = parsed.error; } catch(e) {}
+            // set inline error near phone input if present
+            try { const perr = document.getElementById('dealerPhoneError'); if (perr) { perr.textContent = msg; perr.style.display = 'block'; } } catch(e){}
+            this.showToast(msg, 'error');
+            // re-enable save button and leave form open so admin can correct
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = saveBtn.dataset._oldText || 'Save'; }
+            return;
+                }
                 throw new Error(txt || 'Failed to save dealer');
             }
-            await res.json();
+            const saved = await res.json();
+        // clear inline error on success
+        try { const perr = document.getElementById('dealerPhoneError'); if (perr) { perr.textContent = ''; perr.style.display = 'none'; } } catch(e){}
             this.hideDealerForm();
             await this.loadDealers();
             this.showToast('Dealer saved', 'success');
@@ -1182,10 +1383,11 @@ class ScrapCollectApp {
     async editDealer(id) {
         // fetch dealers then find
         try {
-            const res = await fetch('/api/dealers');
-            const data = res.ok ? await res.json() : [];
+            const base = this.getApiBase();
+            const res = await fetch(base + '/api/dealers');
+            const data = res && res.ok ? await res.json() : [];
             const found = (data || []).find(x => String(x.id) === String(id));
-            if (found) this.showDealerForm(found);
+            if (found) this.openDealerModal(found);
         } catch (e) { console.warn('editDealer failed', e); }
     }
 
@@ -1195,9 +1397,10 @@ class ScrapCollectApp {
         if (delBtn) { delBtn.disabled = true; delBtn.dataset._oldText = delBtn.textContent; delBtn.textContent = 'Deleting...'; }
         const token = window.__getAuthToken && window.__getAuthToken();
         try {
+            const base = this.getApiBase();
             const headers = {};
             if (token) headers['Authorization'] = 'Bearer ' + token;
-            const res = await fetch(`/api/dealers/${id}`, { method: 'DELETE', headers });
+            const res = await fetch(base + `/api/dealers/${id}`, { method: 'DELETE', headers });
             if (!res.ok) throw new Error(await res.text());
             this.showToast('Dealer deleted', 'success');
             await this.loadDealers();
@@ -1206,8 +1409,9 @@ class ScrapCollectApp {
 
     async loadScrapTypes() {
         try {
-            const res = await fetch('/api/scrapTypes');
-            const data = res.ok ? await res.json() : [];
+            const base = this.getApiBase();
+            const res = await fetch(base + '/api/scrapTypes');
+            const data = res && res.ok ? await res.json() : [];
             // store and render in admin list
             this.scrapTypes = data;
             const list = document.getElementById('scrapTypesList');
@@ -1230,6 +1434,7 @@ class ScrapCollectApp {
         document.getElementById('scrapName').value = s ? s.name : '';
         document.getElementById('scrapPrice').value = s ? (s.pricePerKg || '') : '';
         document.getElementById('scrapCategory').value = s ? s.category || '' : '';
+    document.getElementById('scrapDescription').value = s ? s.description || '' : '';
         form.setAttribute('data-edit-id', s && s.id ? s.id : '');
         form.classList.remove('hidden');
     }
@@ -1241,12 +1446,13 @@ class ScrapCollectApp {
         const saveBtn = form.querySelector('[data-admin-action="saveScrap"]');
         if (saveBtn) { saveBtn.disabled = true; saveBtn.dataset._oldText = saveBtn.textContent; saveBtn.textContent = 'Saving...'; }
         const id = form.getAttribute('data-edit-id');
-        const payload = { name: document.getElementById('scrapName').value, pricePerKg: Number(document.getElementById('scrapPrice').value), category: document.getElementById('scrapCategory').value };
+    const payload = { name: document.getElementById('scrapName').value, pricePerKg: Number(document.getElementById('scrapPrice').value), category: document.getElementById('scrapCategory').value, description: document.getElementById('scrapDescription').value };
         const token = (window.__getAuthToken && window.__getAuthToken()) || null;
         const headers = { 'Content-Type':'application/json' };
         if (token) headers['Authorization'] = 'Bearer ' + token;
-        const opts = { method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(payload) };
-        const path = id ? `/api/scrapTypes/${id}` : '/api/scrapTypes';
+    const base = this.getApiBase();
+    const opts = { method: id ? 'PUT' : 'POST', headers, body: JSON.stringify(payload) };
+    const path = base + (id ? `/api/scrapTypes/${id}` : '/api/scrapTypes');
         try {
             const res = await fetch(path, opts);
             if (!res.ok) {
@@ -1266,7 +1472,7 @@ class ScrapCollectApp {
     }
 
     async editScrap(id) {
-        try { const res = await fetch('/api/scrapTypes'); const data = res.ok ? await res.json() : []; const found = (data||[]).find(x => String(x.id) === String(id)); if (found) this.showScrapForm(found); } catch (e) { console.warn('editScrap failed', e); }
+    try { const base = this.getApiBase(); const res = await fetch(base + '/api/scrapTypes'); const data = res && res.ok ? await res.json() : []; const found = (data||[]).find(x => String(x.id) === String(id)); if (found) this.showScrapForm(found); } catch (e) { console.warn('editScrap failed', e); }
     }
 
     async deleteScrap(id) {
@@ -1275,9 +1481,10 @@ class ScrapCollectApp {
         if (delBtn) { delBtn.disabled = true; delBtn.dataset._oldText = delBtn.textContent; delBtn.textContent = 'Deleting...'; }
         const token = (window.__getAuthToken && window.__getAuthToken()) || null;
         try {
+            const base = this.getApiBase();
             const headers = {};
             if (token) headers['Authorization'] = 'Bearer ' + token;
-            const res = await fetch(`/api/scrapTypes/${id}`, { method: 'DELETE', headers });
+            const res = await fetch(base + `/api/scrapTypes/${id}`, { method: 'DELETE', headers });
             if (!res.ok) throw new Error(await res.text());
             this.showToast('Scrap type deleted', 'success');
             await this.loadScrapTypes();
