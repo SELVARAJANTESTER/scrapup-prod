@@ -17,6 +17,8 @@ server.log
 # Firebase service account (sensitive)
 firebase-service-account.json
 *.key
+firebase-service-account.json.sample
+scrapup-*.json
 
 # OS / editor
 .DS_Store
