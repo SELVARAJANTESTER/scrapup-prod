@@ -32,17 +32,53 @@ let db;
 try {
   admin = require('firebase-admin');
   const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
-  if (!fs.existsSync(serviceAccountPath)) {
-    console.warn('Firebase service account not found at ./firebase-service-account.json.\nPlease copy your service account JSON to that path.');
-  } else {
-    const serviceAccount = require(serviceAccountPath);
-  // Determine storage bucket: prefer env var, then serviceAccount field,
-  // then default to the Firebase standard <project_id>.firebasestorage.app
-  const rawBucket = process.env.FIREBASE_STORAGE_BUCKET || serviceAccount.storageBucket || (serviceAccount.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : undefined);
-  const storageBucket = rawBucket && String(rawBucket).trim();
-  const initOpts = { credential: admin.credential.cert(serviceAccount) };
-  if (storageBucket) initOpts.storageBucket = storageBucket;
-  admin.initializeApp(initOpts);
+  // Allow injecting the entire service account JSON via env var (useful for Railway / CI)
+  let serviceAccount = null;
+  // 1) Accept base64-encoded JSON in FIREBASE_SERVICE_ACCOUNT_B64 (some UIs prefer base64)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+    try {
+      const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+      console.log('Loaded Firebase service account from FIREBASE_SERVICE_ACCOUNT_B64 env var.');
+    } catch (e) {
+      console.warn('FIREBASE_SERVICE_ACCOUNT_B64 is present but invalid or not JSON after decoding:', e && e.message);
+    }
+  }
+  // 2) Fallback to raw JSON in FIREBASE_SERVICE_ACCOUNT
+  if (!serviceAccount && process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      console.log('Loaded Firebase service account from FIREBASE_SERVICE_ACCOUNT env var.');
+    } catch (e) {
+      // Try base64 decode in case the user accidentally pasted a base64 string into the raw var
+      try {
+        const maybeDecoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf8');
+        serviceAccount = JSON.parse(maybeDecoded);
+        console.log('Loaded Firebase service account by base64-decoding FIREBASE_SERVICE_ACCOUNT.');
+      } catch (e2) {
+        console.warn('FIREBASE_SERVICE_ACCOUNT is present but contains invalid JSON:', e && e.message);
+      }
+    }
+  }
+  if (!serviceAccount) {
+    if (!fs.existsSync(serviceAccountPath)) {
+      console.warn('Firebase service account not found at ./firebase-service-account.json.\nYou can set FIREBASE_SERVICE_ACCOUNT env var with the JSON to avoid storing a file.');
+    } else {
+      try {
+        serviceAccount = require(serviceAccountPath);
+      } catch (e) {
+        console.warn('Failed to load service account file:', e && e.message);
+      }
+    }
+  }
+  if (serviceAccount) {
+    // Determine storage bucket: prefer env var, then serviceAccount field,
+    // then default to the Firebase standard <project_id>.firebasestorage.app
+    const rawBucket = process.env.FIREBASE_STORAGE_BUCKET || serviceAccount.storageBucket || (serviceAccount.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : undefined);
+    const storageBucket = rawBucket && String(rawBucket).trim();
+    const initOpts = { credential: admin.credential.cert(serviceAccount) };
+    if (storageBucket) initOpts.storageBucket = storageBucket;
+    admin.initializeApp(initOpts);
     db = admin.firestore();
     console.log('Firebase Admin initialized. Scheduling Firestore access test...');
     // Verify that the service account can actually access Firestore.
