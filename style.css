@@ -299,7 +299,8 @@
 
 /* Base styles */
 html {
-  font-size: var(--font-size-base);
+  /* Use a responsive base font-size for better scaling across devices. */
+  font-size: clamp(13px, 1.4vw, 16px);
   font-family: var(--font-family-base);
   line-height: var(--line-height-normal);
   color: var(--color-text);
@@ -406,6 +407,10 @@ pre code {
   text-decoration: none;
   position: relative;
 }
+
+/* Ensure tap targets are comfortably large on touch devices */
+.btn { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+.btn, button, a { -webkit-tap-highlight-color: rgba(0,0,0,0); touch-action: manipulation; }
 
 .btn:focus-visible {
   outline: none;
@@ -1095,9 +1100,9 @@ select.form-control {
 .request-card {
   background: var(--color-surface);
   border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-20);
-  transition: all var(--duration-normal) var(--ease-standard);
+  border-radius: calc(var(--radius-lg) + 2px);
+  padding: clamp(12px, 2.4vw, 28px);
+  transition: box-shadow var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard);
 }
 
 .request-card:hover {
@@ -1123,14 +1128,50 @@ select.form-control {
 
 .request-content {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--space-20);
+  grid-template-columns: 1fr 320px;
+  gap: clamp(12px, 2vw, 24px);
 }
 
 @media (max-width: 768px) {
   .request-content {
     grid-template-columns: 1fr;
+    gap: var(--space-12);
   }
+}
+
+/* Improve scrap list responsiveness and spacing on small screens */
+@media (max-width: 640px) {
+  .scrap-item-display {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    padding: var(--space-6) 0;
+  }
+  .scrap-rate, .scrap-qty, .scrap-subtotal { font-size: var(--font-size-sm); }
+}
+
+/* Responsive images inside request cards */
+.request-images img {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* iOS safe-area support for the top header */
+.header { padding-top: env(safe-area-inset-top, 12px); }
+
+/* Slightly larger card shadows on larger screens for depth */
+@media (min-width: 1024px) {
+  .request-card { box-shadow: var(--shadow-md); }
+}
+
+/* Make interactive controls more touch friendly */
+.request-actions .btn { width: 100%; }
+
+/* Utility: responsive container padding for wide screens */
+@media (min-width: 1280px) {
+  .container { padding-left: 32px; padding-right: 32px; }
 }
 
 .request-details h4 {
@@ -1145,10 +1186,14 @@ select.form-control {
 }
 
 .scrap-list {
-  background: var(--color-bg-1);
-  border-radius: var(--radius-base);
+  /* Make the list appear as a dealer-style card */
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg-1) 100%);
+  border-radius: var(--radius-lg);
   padding: var(--space-12);
   margin: var(--space-12) 0;
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .scrap-item-display {
@@ -1156,8 +1201,9 @@ select.form-control {
   grid-template-columns: 1fr 110px 90px 120px;
   gap: var(--space-8);
   align-items: center;
-  padding: var(--space-6) 0;
+  padding: var(--space-8) var(--space-4);
   border-bottom: 1px solid var(--color-card-border-inner);
+  background: transparent;
 }
 
 .scrap-item-display:last-child {
@@ -1169,11 +1215,12 @@ select.form-control {
   grid-template-columns: 1fr 110px 90px 120px;
   gap: var(--space-8);
   align-items: center;
-  padding: var(--space-8) 0;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: var(--space-10) var(--space-12);
   margin-bottom: var(--space-8);
-  color: var(--color-text-secondary);
+  color: #ffffff;
   font-size: var(--font-size-sm);
+  font-weight: 600;
+  background: linear-gradient(90deg, rgba(33,150,243,0.95), rgba(33,120,210,0.95));
 }
 
 .scrap-type { font-weight: 500; }
