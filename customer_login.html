@@ -3,76 +3,87 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ScrapUp — Customer Login</title>
+  <title>PickMyScrap — Customer Login</title>
   <style>
-    :root{--accent:#00a86b;--card:#ffffff;--muted:#6b7280}
+    :root{ --brand-1: #2196F3; --brand-2: #29A19A; --bg-1: #071022; --card:#0b1220; --muted:#9aa6b2 }
     html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-    body{display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0f172a 0%, #071024 50%), url('https://images.unsplash.com/photo-1508780709619-79562169bc64?auto=format&fit=crop&w=1600&q=60') center/cover no-repeat; color:#fff}
-    .overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.6));}
-    .card{position:relative;z-index:2;max-width:920px;width:100%;display:grid;grid-template-columns:1fr 420px;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
-    .hero{padding:48px;background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));display:flex;flex-direction:column;gap:18px}
-  .hero h1{margin:0;font-size:30px;letter-spacing:-0.4px}
-    .hero p{margin:0;color:var(--muted)}
-    .benefits{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
-    .benefit{background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:8px;font-size:13px}
-    form{padding:36px;background:var(--card);color:#0b1220}
-    .brand{display:flex;gap:12px;align-items:center}
-  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,var(--accent),#007a57);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px}
-    label{display:block;font-size:13px;margin-bottom:6px;color:#374151}
-    input[type=tel]{width:100%;padding:12px;border-radius:8px;border:1px solid #e5e7eb;font-size:15px}
-    .row{margin-top:12px}
-    .btn{display:inline-block;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;border:0}
-    .btn--primary{background:linear-gradient(90deg,var(--accent),#008f6a);color:#fff}
-    .btn--ghost{background:transparent;border:1px solid #e6e7eb;color:#0b1220}
-    .meta{font-size:13px;color:#6b7280;margin-top:8px}
-    .small{font-size:13px;color:#475569}
-    .center{display:flex;align-items:center;gap:8px}
-    .success{background:#ecfdf5;color:#064e3b;padding:10px;border-radius:8px;margin-top:10px}
-    .error{background:#fff1f2;color:#7f1d1d;padding:10px;border-radius:8px;margin-top:10px}
-    @media(max-width:960px){.card{grid-template-columns:1fr;}.hero{display:none}.card{border-radius:12px}}
+    body{display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--bg-1) 0%, #071024 60%);color:#fff;padding:24px}
+
+    /* Card */
+    .auth-wrap{width:100%;max-width:980px;display:grid;grid-template-columns:1fr 420px;border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(2,6,23,0.6);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+    .auth-hero{padding:48px 40px;display:flex;flex-direction:column;gap:18px;background:linear-gradient(135deg, rgba(33,150,243,0.08), rgba(41,150,161,0.03));}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(180deg,var(--brand-2),var(--brand-1));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px}
+    .hero-title{font-size:28px;margin:0;color:#fff}
+    .hero-sub{margin:0;color:var(--muted);font-size:14px}
+    .hero-cta{margin-top:8px;color:var(--muted);font-size:14px}
+    .benefits{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+    .benefit{background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;font-size:13px;color:#e6f7fb}
+
+    /* Form column */
+    .auth-form{background:#fff;color:#071022;padding:34px 32px;display:flex;flex-direction:column;gap:14px}
+    .auth-form h2{margin:0;color:var(--bg-1);font-size:20px}
+    .auth-form p.lead{margin:0;color:#6b7280;font-size:13px}
+    label{display:block;font-size:13px;margin-bottom:8px;color:#374151}
+    input[type=tel]{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #e6eaf0;font-size:15px}
+    .row{margin-top:10px}
+    .actions{display:flex;gap:10px;align-items:center}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;border:0}
+    .btn--primary{background:linear-gradient(90deg,var(--brand-2),var(--brand-1));color:#fff}
+    .btn--ghost{background:transparent;border:1px solid #e6eaf0;color:#071022}
+    .meta{font-size:13px;color:#6b7280;margin-top:6px}
+    .info-box{padding:10px;border-radius:8px;font-size:13px}
+    .success{background:#ecfdf5;color:#064e3b}
+    .error{background:#fff1f2;color:#7f1d1d}
+
+    /* Responsive */
+    @media(max-width:960px){.auth-wrap{grid-template-columns:1fr;}.auth-hero{display:none;border-radius:12px}.auth-form{border-radius:12px}}
+    @media(max-width:420px){.auth-form{padding:20px}}
+
+    /* small polish for header controls when embedded */
+    .hint{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
-  <div class="overlay" aria-hidden="true"></div>
-  <main class="card" role="main">
-    <section class="hero" aria-hidden="true">
+  <main class="auth-wrap" role="main" aria-labelledby="loginTitle">
+    <section class="auth-hero" aria-hidden="true">
       <div class="brand">
-        <div class="logo">SU</div>
+        <div class="logo">PMS</div>
         <div>
-          <h1>ScrapUp — Customer Portal</h1>
-          <p class="small">Request pickups, track collections, and get fair pricing.</p>
+          <h1 class="hero-title">PickMyScrap — Customer</h1>
+          <p class="hero-sub">Fast pickups • Fair pricing • Local dealers</p>
         </div>
       </div>
 
-  <p style="margin-top:18px">Fast, contactless pickups. Transparent pricing. Local dealers ready to collect your scrap.</p>
+      <p class="hero-cta">Schedule pickups in seconds, stay updated with live pickup tracking, and get transparent per-kg prices from verified dealers.</p>
 
-      <div class="benefits">
-  <div class="benefit">Schedule pickups in 1 minute</div>
-  <div class="benefit">Transparent per-kg pricing</div>
-  <div class="benefit">Secure phone-based login</div>
-  <div class="benefit">Instant confirmations</div>
+      <div class="benefits" aria-hidden="true">
+        <div class="benefit">Contactless pickups</div>
+        <div class="benefit">Instant confirmations</div>
+        <div class="benefit">Trusted local dealers</div>
+        <div class="benefit">Clear per-kg rates</div>
       </div>
 
-      <div style="margin-top:auto;color:var(--muted);font-size:13px">Share this single link with customers for a simple, low-friction login experience.</div>
+      <div style="margin-top:auto;color:var(--muted);font-size:13px">Tip: Share this link with customers for a low-friction signup and pickup experience.</div>
     </section>
 
-    <form id="customerLoginForm" aria-label="Customer login form">
-      <h2 style="margin:0 0 8px 0">Sign in to ScrapUp</h2>
-      <p class="small">Enter your 10-digit mobile number to continue. No password required.</p>
+    <form id="customerLoginForm" class="auth-form" aria-label="Customer login form">
+      <h2 id="loginTitle">Sign in — PickMyScrap</h2>
+      <p class="lead">Enter your mobile number to receive a quick verification and continue.</p>
 
       <div class="row">
-  <label for="phone">Mobile number</label>
-        <input id="phone" name="phone" type="tel" inputmode="numeric" pattern="\d{10}" maxlength="10" placeholder="e.g. 8000000001" required>
+        <label for="phone">Mobile number</label>
+        <input id="phone" name="phone" type="tel" inputmode="numeric" pattern="\d{10}" maxlength="10" placeholder="e.g. 8000000001" required aria-required="true">
       </div>
 
-      <div class="row">
-    <button type="submit" class="btn btn--primary">Sign In</button>
-    <button type="button" id="openApp" class="btn btn--ghost" style="margin-left:8px">Open ScrapUp</button>
+      <div class="row actions">
+        <button type="submit" class="btn btn--primary">Continue</button>
+        <button type="button" id="openApp" class="btn btn--ghost">Open App</button>
       </div>
 
       <div id="feedback" aria-live="polite"></div>
 
-  <p class="meta">By continuing you agree to our terms. This page creates a customer account (role: customer) for ScrapUp.</p>
+      <p class="meta">By continuing you agree to our terms. This will create a customer account for PickMyScrap.</p>
     </form>
   </main>
 
@@ -85,12 +96,12 @@
       return digits.slice(-10);
     }
 
-  const form = document.getElementById('customerLoginForm');
-  const feedback = document.getElementById('feedback');
-  const openApp = document.getElementById('openApp');
+    const form = document.getElementById('customerLoginForm');
+    const feedback = document.getElementById('feedback');
+    const openApp = document.getElementById('openApp');
 
     function showMessage(msg, type='info'){
-      feedback.innerHTML = `<div class="${type==='error'?'error':'success'}">${msg}</div>`;
+      feedback.innerHTML = `<div class="info-box ${type==='error'?'error':'success'}">${msg}</div>`;
     }
 
     form.addEventListener('submit', async (e) => {
@@ -112,15 +123,15 @@
           if (!create.ok) throw new Error('Create failed');
           user = await create.json();
         }
-    // ensure role is present and store a lightweight auth object so the main app can pick it up
-    try { user.role = user.role || 'customer'; user.standalone = true; localStorage.setItem('customerAuth', JSON.stringify(user)); } catch(e){}
+        // ensure role is present and store a lightweight auth object so the main app can pick it up
+        try { user.role = user.role || 'customer'; user.standalone = true; localStorage.setItem('customerAuth', JSON.stringify(user)); } catch(e){}
 
-    // mark that we're redirecting from the standalone customer login so the SPA knows to auto-enter
-    try { localStorage.setItem('__redirectToIndex', '1'); } catch(e){}
+        // mark that we're redirecting from the standalone customer login so the SPA knows to auto-enter
+        try { localStorage.setItem('__redirectToIndex', '1'); } catch(e){}
 
-  showMessage('Logged in successfully — redirecting to the app…');
-  // Redirect to the main SPA and auto-open the Customer flow so the "Continue as Customer" button is triggered
-  setTimeout(() => { window.location.href = 'home.html?autoRole=customer&phone=' + encodeURIComponent(phone); }, 900);
+        showMessage('Logged in successfully — redirecting to the app…');
+        // Redirect to the main SPA and auto-open the Customer flow
+        setTimeout(() => { window.location.href = 'home.html?autoRole=customer&phone=' + encodeURIComponent(phone); }, 900);
       } catch (err) {
         console.error(err);
         showMessage('Server error while logging in. Try again or contact support.', 'error');
@@ -128,11 +139,10 @@
     });
 
     openApp.addEventListener('click', () => {
-  window.location.href = 'home.html?autoRole=customer';
+      window.location.href = 'home.html?autoRole=customer';
     });
-  // "Open ScrapUp" button present for quick access
   </script>
-  </script>
+
   <!-- Set API base at deploy time. When developing locally, prefer the running local server. -->
   <script>
     (function(){

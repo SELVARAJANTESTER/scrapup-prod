@@ -110,10 +110,13 @@
   --space-8: 8px;
   --space-10: 10px;
   --space-12: 12px;
+  --space-14: 14px;
   --space-16: 16px;
+  --space-18: 18px;
   --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
+  --space-40: 40px;
 
   /* Border Radius */
   --radius-sm: 6px;
@@ -299,19 +302,29 @@
 
 /* Base styles */
 html {
-  /* Use a responsive base font-size for better scaling across devices. */
-  font-size: clamp(13px, 1.4vw, 16px);
+  /* Responsive font-size that scales better across all device types */
+  font-size: clamp(14px, 1.6vw, 18px);
   font-family: var(--font-family-base);
   line-height: var(--line-height-normal);
   color: var(--color-text);
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   box-sizing: border-box;
+  /* Prevent horizontal scrolling on mobile */
+  overflow-x: hidden;
+  /* Improve scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
   margin: 0;
   padding: 0;
+  /* Prevent font size adjustments on iOS in landscape */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  /* Prevent tap highlights on mobile */
+  -webkit-tap-highlight-color: transparent;
 }
 
 *,
@@ -396,7 +409,7 @@ pre code {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-8) var(--space-16);
+  padding: var(--space-12) var(--space-20);
   border-radius: var(--radius-base);
   font-size: var(--font-size-base);
   font-weight: 500;
@@ -406,11 +419,49 @@ pre code {
   border: none;
   text-decoration: none;
   position: relative;
+  /* Ensure tap targets are at least 44px for accessibility */
+  min-height: 44px;
+  min-width: 44px;
+  /* Improve touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  /* Prevent double-tap zoom on mobile */
+  touch-action: manipulation;
 }
 
-/* Ensure tap targets are comfortably large on touch devices */
-.btn { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
-.btn, button, a { -webkit-tap-highlight-color: rgba(0,0,0,0); touch-action: manipulation; }
+/* Enhanced button sizes for better touch targets */
+.btn--sm {
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+  min-height: 40px;
+}
+
+.btn--lg {
+  padding: var(--space-16) var(--space-32);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-md);
+  min-height: 56px;
+}
+
+/* Better mobile button spacing */
+@media (max-width: 768px) {
+  .btn {
+    padding: var(--space-14) var(--space-24);
+    font-size: calc(var(--font-size-base) * 1.1);
+  }
+  
+  .btn--sm {
+    padding: var(--space-10) var(--space-18);
+    min-height: 42px;
+  }
+  
+  .btn--lg {
+    padding: var(--space-18) var(--space-36);
+    min-height: 60px;
+  }
+}
 
 .btn:focus-visible {
   outline: none;
@@ -478,7 +529,7 @@ pre code {
 .form-control {
   display: block;
   width: 100%;
-  padding: var(--space-8) var(--space-12);
+  padding: var(--space-12) var(--space-16);
   font-size: var(--font-size-md);
   line-height: 1.5;
   color: var(--color-text);
@@ -487,15 +538,34 @@ pre code {
   border-radius: var(--radius-base);
   transition: border-color var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard);
+  /* Better mobile input handling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* Prevent zoom on iOS when input is focused */
+  font-size: max(16px, var(--font-size-md));
+}
+
+/* Mobile-specific form enhancements */
+@media (max-width: 768px) {
+  .form-control {
+    padding: var(--space-14) var(--space-18);
+    /* Ensure inputs don't cause zoom on mobile */
+    font-size: 16px;
+    /* Add more vertical padding for easier touch */
+    min-height: 48px;
+  }
 }
 
 textarea.form-control {
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
+  resize: vertical;
+  min-height: 100px;
 }
 
 select.form-control {
-  padding: var(--space-8) var(--space-12);
+  padding: var(--space-12) var(--space-16);
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -504,6 +574,7 @@ select.form-control {
   background-position: right var(--space-12) center;
   background-size: 16px;
   padding-right: var(--space-32);
+  cursor: pointer;
 }
 
 /* Add a dark mode specific caret */
@@ -619,26 +690,44 @@ select.form-control {
   margin-left: auto;
   padding-right: var(--space-16);
   padding-left: var(--space-16);
+  /* Ensure container doesn't cause horizontal overflow */
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive breakpoints with better mobile-first approach */
+@media (min-width: 480px) {
+  .container {
+    padding-right: var(--space-20);
+    padding-left: var(--space-20);
+  }
 }
 
 @media (min-width: 640px) {
   .container {
     max-width: var(--container-sm);
+    padding-right: var(--space-24);
+    padding-left: var(--space-24);
   }
 }
+
 @media (min-width: 768px) {
   .container {
     max-width: var(--container-md);
   }
 }
+
 @media (min-width: 1024px) {
   .container {
     max-width: var(--container-lg);
   }
 }
+
 @media (min-width: 1280px) {
   .container {
     max-width: var(--container-xl);
+    padding-right: var(--space-32);
+    padding-left: var(--space-32);
   }
 }
 
@@ -743,7 +832,7 @@ select.form-control {
 }
 
 /* END PERPLEXITY DESIGN SYSTEM */
-/* Custom styles for ScrapCollect App */
+/* Custom styles for PickMyScrap App */
 
 /* Override some design system colors for app-specific branding */
 :root {
@@ -762,6 +851,10 @@ select.form-control {
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-sm);
+  /* iOS safe area support */
+  padding-top: env(safe-area-inset-top, 0);
+  /* Prevent header content from being too compressed */
+  min-height: 64px;
 }
 
 .header-content {
@@ -769,6 +862,58 @@ select.form-control {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-16) 0;
+  /* Ensure header doesn't break on small screens */
+  min-height: 48px;
+}
+
+/* Mobile header optimizations */
+@media (max-width: 768px) {
+  .header-content {
+    padding: var(--space-12) 0;
+    gap: var(--space-8);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-xl);
+    /* Prevent title from taking too much space */
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  
+  .nav {
+    display: flex;
+    gap: var(--space-6);
+    flex-shrink: 0;
+    /* Allow nav items to wrap on very small screens */
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  
+  /* Make language selector more compact on mobile */
+  #langSelect {
+    padding: var(--space-6) var(--space-8);
+    font-size: var(--font-size-sm);
+    min-width: 80px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .header-content {
+    flex-direction: column;
+    gap: var(--space-12);
+    padding: var(--space-12) 0 var(--space-16) 0;
+  }
+  
+  .nav {
+    width: 100%;
+    justify-content: center;
+    gap: var(--space-8);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-lg);
+  }
 }
 
 .app-title {
@@ -781,6 +926,32 @@ select.form-control {
 .nav {
   display: flex;
   gap: var(--space-12);
+}
+
+/* Compact header/nav buttons and language selector
+   Keep most buttons unchanged; only make header controls visually smaller
+   so Back / Logout / language look balanced. */
+.header .nav .btn,
+.header .nav button,
+.header .nav .btn--outline,
+#langSelect {
+  padding: var(--space-6) var(--space-12);
+  font-size: calc(var(--font-size-base) * 0.95);
+  min-height: 36px; /* slightly smaller than global 44px */
+  height: auto;
+  line-height: 1.2;
+  border-radius: calc(var(--radius-sm) - 2px);
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .header .nav .btn,
+  .header .nav button,
+  #langSelect {
+    padding: var(--space-6) var(--space-10);
+    min-height: 34px;
+    font-size: var(--font-size-sm);
+  }
 }
 
 /* Main Layout */
@@ -801,7 +972,7 @@ select.form-control {
 /* Role Selection */
 .role-selection {
   text-align: center;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -821,45 +992,83 @@ select.form-control {
 
 .role-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-24);
   margin-top: var(--space-32);
+}
+
+/* Mobile-first responsive design for role cards */
+@media (max-width: 768px) {
+  .role-cards {
+    grid-template-columns: 1fr;
+    gap: var(--space-20);
+    margin-top: var(--space-24);
+  }
+}
+
+@media (max-width: 480px) {
+  .role-cards {
+    gap: var(--space-16);
+  }
 }
 
 .role-card {
   background: var(--color-surface);
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-24);
+  padding: var(--space-32);
   text-align: center;
   transition: all var(--duration-normal) var(--ease-standard);
   cursor: pointer;
+  /* Better touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.role-card:hover {
+@media (max-width: 768px) {
+  .role-card {
+    padding: var(--space-24);
+  }
+}
+
+.role-card:hover,
+.role-card:focus-within {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
   border-color: var(--color-app-primary);
 }
 
+/* Improve touch feedback on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .role-card:hover {
+    transform: none;
+  }
+  
+  .role-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
 .role-icon {
-  font-size: 48px;
+  font-size: clamp(40px, 8vw, 56px);
   margin-bottom: var(--space-16);
 }
 
 .role-card h3 {
   color: var(--color-text);
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-12);
 }
 
 .role-card p {
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-20);
+  margin-bottom: var(--space-24);
+  line-height: 1.6;
 }
 
 /* Customer Home */
 .customer-home {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -867,41 +1076,93 @@ select.form-control {
   background: linear-gradient(135deg, var(--color-app-primary), var(--color-app-secondary));
   color: white;
   text-align: center;
-  padding: var(--space-32);
+  padding: var(--space-40);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-32);
 }
 
+@media (max-width: 768px) {
+  .welcome-banner {
+    padding: var(--space-32);
+    margin-bottom: var(--space-24);
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-banner {
+    padding: var(--space-24);
+    border-radius: var(--radius-base);
+  }
+}
+
 .welcome-banner h2 {
   color: white;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-12);
 }
 
 .welcome-banner p {
   opacity: 0.9;
   font-size: var(--font-size-lg);
+  margin: 0;
 }
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-20);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-24);
   margin-bottom: var(--space-32);
+}
+
+/* Better mobile layout for quick actions */
+@media (max-width: 768px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+    gap: var(--space-20);
+    margin-bottom: var(--space-24);
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-actions {
+    gap: var(--space-16);
+  }
 }
 
 .action-card {
   background: var(--color-surface);
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-24);
+  padding: var(--space-32);
   text-align: center;
   cursor: pointer;
   transition: all var(--duration-normal) var(--ease-standard);
+  /* Improve touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.action-card:hover {
+@media (max-width: 768px) {
+  .action-card {
+    padding: var(--space-24);
+  }
+}
+
+.action-card:hover,
+.action-card:focus-within {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+/* Better touch feedback */
+@media (hover: none) and (pointer: coarse) {
+  .action-card:hover {
+    transform: none;
+  }
+  
+  .action-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
 }
 
 .action-card.primary-action {
@@ -910,17 +1171,19 @@ select.form-control {
 }
 
 .action-icon {
-  font-size: 32px;
+  font-size: clamp(28px, 6vw, 40px);
   margin-bottom: var(--space-16);
 }
 
 .action-card h3 {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-12);
   color: var(--color-text);
 }
 
 .action-card p {
   color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
 }
 
 /* Pricing Section */
@@ -969,7 +1232,7 @@ select.form-control {
 
 /* Form Styles */
 .request-form-section {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
@@ -977,7 +1240,20 @@ select.form-control {
   background: var(--color-surface);
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-24);
+  padding: var(--space-32);
+}
+
+@media (max-width: 768px) {
+  .pickup-form {
+    padding: var(--space-24);
+    border-radius: var(--radius-base);
+  }
+}
+
+@media (max-width: 480px) {
+  .pickup-form {
+    padding: var(--space-20);
+  }
 }
 
 .form-section {
@@ -1000,12 +1276,14 @@ select.form-control {
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-16);
+  gap: var(--space-20);
 }
 
+/* Mobile-first form layout */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+    gap: var(--space-16);
   }
 }
 
@@ -1014,13 +1292,15 @@ select.form-control {
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  width: 100%;
+  justify-content: center;
 }
 
 .location-display {
   background: var(--color-bg-3);
   border: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: var(--radius-base);
-  padding: var(--space-12);
+  padding: var(--space-16);
   margin-top: var(--space-12);
 }
 
@@ -1028,12 +1308,22 @@ select.form-control {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+@media (max-width: 480px) {
+  .location-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .coordinates {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  word-break: break-all;
 }
 
 .scrap-items {
@@ -1044,33 +1334,43 @@ select.form-control {
   background: var(--color-bg-1);
   border: 1px solid var(--color-card-border-inner);
   border-radius: var(--radius-base);
-  padding: var(--space-16);
-  margin-bottom: var(--space-12);
+  padding: var(--space-20);
+  margin-bottom: var(--space-16);
   position: relative;
+}
+
+@media (max-width: 768px) {
+  .scrap-item {
+    padding: var(--space-16);
+  }
 }
 
 .remove-item {
   position: absolute;
-  top: var(--space-8);
-  right: var(--space-8);
+  top: var(--space-12);
+  right: var(--space-12);
   background: var(--color-app-danger);
   color: white;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  /* Better touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .estimated-value {
   background: var(--color-bg-2);
   border: 1px solid rgba(255, 152, 0, 0.3);
   border-radius: var(--radius-base);
-  padding: var(--space-16);
+  padding: var(--space-20);
   text-align: center;
   margin-bottom: var(--space-24);
 }
@@ -1085,7 +1385,7 @@ select.form-control {
 .requests-section,
 .dealer-dashboard,
 .admin-dashboard {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -1094,19 +1394,54 @@ select.form-control {
 .admin-requests-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
+  gap: var(--space-20);
+}
+
+@media (max-width: 768px) {
+  .requests-list,
+  .dealer-requests-list,
+  .admin-requests-list {
+    gap: var(--space-16);
+  }
 }
 
 .request-card {
   background: var(--color-surface);
   border: 1px solid var(--color-card-border);
-  border-radius: calc(var(--radius-lg) + 2px);
-  padding: clamp(12px, 2.4vw, 28px);
-  transition: box-shadow var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard);
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  transition: box-shadow var(--duration-normal) var(--ease-standard), 
+              transform var(--duration-normal) var(--ease-standard);
+  /* Prevent overflow on mobile */
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .request-card {
+    padding: var(--space-20);
+    border-radius: var(--radius-base);
+  }
+}
+
+@media (max-width: 480px) {
+  .request-card {
+    padding: var(--space-16);
+  }
 }
 
 .request-card:hover {
   box-shadow: var(--shadow-md);
+}
+
+/* Better depth on larger screens */
+@media (min-width: 1024px) {
+  .request-card {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .request-card:hover {
+    box-shadow: var(--shadow-lg);
+  }
 }
 
 .request-header {
@@ -1114,94 +1449,110 @@ select.form-control {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: var(--space-16);
+  gap: var(--space-12);
+}
+
+@media (max-width: 768px) {
+  .request-header {
+    flex-direction: column;
+    gap: var(--space-8);
+    align-items: stretch;
+  }
 }
 
 .request-id {
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
+  font-size: var(--font-size-base);
 }
 
 .request-date {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .request-date {
+    white-space: normal;
+  }
 }
 
 .request-content {
   display: grid;
   grid-template-columns: 1fr 320px;
-  gap: clamp(12px, 2vw, 24px);
+  gap: var(--space-24);
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .request-content {
+    grid-template-columns: 1fr 280px;
+    gap: var(--space-20);
+  }
 }
 
 @media (max-width: 768px) {
   .request-content {
     grid-template-columns: 1fr;
-    gap: var(--space-12);
+    gap: var(--space-16);
   }
-}
-
-/* Improve scrap list responsiveness and spacing on small screens */
-@media (max-width: 640px) {
-  .scrap-item-display {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-6);
-    padding: var(--space-6) 0;
-  }
-  .scrap-rate, .scrap-qty, .scrap-subtotal { font-size: var(--font-size-sm); }
-}
-
-/* Responsive images inside request cards */
-.request-images img {
-  width: 100%;
-  max-width: 140px;
-  height: auto;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-/* iOS safe-area support for the top header */
-.header { padding-top: env(safe-area-inset-top, 12px); }
-
-/* Slightly larger card shadows on larger screens for depth */
-@media (min-width: 1024px) {
-  .request-card { box-shadow: var(--shadow-md); }
-}
-
-/* Make interactive controls more touch friendly */
-.request-actions .btn { width: 100%; }
-
-/* Utility: responsive container padding for wide screens */
-@media (min-width: 1280px) {
-  .container { padding-left: 32px; padding-right: 32px; }
 }
 
 .request-details h4 {
   color: var(--color-text);
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-12);
+  font-size: var(--font-size-lg);
 }
 
 .request-info {
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-8);
   font-size: var(--font-size-sm);
+  line-height: 1.5;
+  /* Handle long text gracefully */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
+/* Enhanced scrap list styling */
 .scrap-list {
-  /* Make the list appear as a dealer-style card */
   background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg-1) 100%);
   border-radius: var(--radius-lg);
-  padding: var(--space-12);
-  margin: var(--space-12) 0;
+  padding: var(--space-16);
+  margin: var(--space-16) 0;
   border: 1px solid var(--color-card-border);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
+@media (max-width: 768px) {
+  .scrap-list {
+    padding: var(--space-12);
+    border-radius: var(--radius-base);
+  }
+}
+
+.scrap-list-header {
+  display: grid;
+  grid-template-columns: 1fr 110px 90px 120px;
+  gap: var(--space-12);
+  align-items: center;
+  padding: var(--space-12) var(--space-16);
+  margin-bottom: var(--space-12);
+  color: #ffffff;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  background: linear-gradient(90deg, rgba(33,150,243,0.95), rgba(33,120,210,0.95));
+  border-radius: var(--radius-sm);
+}
+
 .scrap-item-display {
   display: grid;
   grid-template-columns: 1fr 110px 90px 120px;
-  gap: var(--space-8);
+  gap: var(--space-12);
   align-items: center;
-  padding: var(--space-8) var(--space-4);
+  padding: var(--space-12) var(--space-8);
   border-bottom: 1px solid var(--color-card-border-inner);
   background: transparent;
 }
@@ -1210,35 +1561,70 @@ select.form-control {
   border-bottom: none;
 }
 
-.scrap-list-header {
-  display: grid;
-  grid-template-columns: 1fr 110px 90px 120px;
-  gap: var(--space-8);
-  align-items: center;
-  padding: var(--space-10) var(--space-12);
-  margin-bottom: var(--space-8);
-  color: #ffffff;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  background: linear-gradient(90deg, rgba(33,150,243,0.95), rgba(33,120,210,0.95));
+/* Mobile-responsive scrap list */
+@media (max-width: 768px) {
+  .scrap-list-header {
+    display: none;
+  }
+  
+  .scrap-item-display {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--space-8) var(--space-12);
+    padding: var(--space-12);
+    border-bottom: 1px solid var(--color-card-border-inner);
+  }
+  
+  .scrap-type {
+    grid-column: 1 / -1;
+    font-weight: 600;
+    margin-bottom: var(--space-4);
+  }
+  
+  .scrap-rate::before { content: "Rate: "; font-weight: 500; }
+  .scrap-qty::before { content: "Qty: "; font-weight: 500; }
+  .scrap-subtotal::before { content: "Total: "; font-weight: 500; }
 }
 
-.scrap-type { font-weight: 500; }
-.scrap-rate, .scrap-qty, .scrap-subtotal { text-align: right; color: var(--color-text-secondary); }
+.scrap-type { 
+  font-weight: 500; 
+  color: var(--color-text);
+}
+
+.scrap-rate, 
+.scrap-qty, 
+.scrap-subtotal { 
+  text-align: right; 
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
 
 @media (max-width: 768px) {
-  .scrap-item-display, .scrap-list-header {
-    grid-template-columns: 1fr 1fr;
-    grid-auto-rows: minmax(24px, auto);
+  .scrap-rate, 
+  .scrap-qty, 
+  .scrap-subtotal {
+    text-align: left;
+    font-size: var(--font-size-sm);
   }
-  .scrap-rate, .scrap-qty, .scrap-subtotal { text-align: right; }
-  .scrap-list-header { display: none; }
 }
 
 .request-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-12);
+}
+
+@media (max-width: 768px) {
+  .request-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+  }
+  
+  .request-actions .btn {
+    flex: 1;
+    min-width: 120px;
+  }
 }
 
 /* Status Indicators */
@@ -1469,6 +1855,8 @@ select.form-control {
   justify-content: center;
   opacity: 1;
   transition: opacity var(--duration-normal) var(--ease-standard);
+  /* Improve mobile scrolling in modals */
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal.hidden {
@@ -1482,69 +1870,98 @@ select.form-control {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  /* Better backdrop on mobile */
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .modal-content {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  max-width: 500px;
+  max-width: 600px;
   width: 90%;
+  max-height: 90vh;
   position: relative;
   z-index: 1001;
+  overflow-y: auto;
+  /* Better mobile modal experience */
+  margin: var(--space-20);
 }
 
-/* Dealer modal success messaging */
-#modalDealerSuccess, #modalDealerSuccess.small-muted {
-  font-weight: 600;
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: none;
+    margin: var(--space-16);
+    border-radius: var(--radius-base);
+    max-height: 85vh;
+  }
 }
 
-/* flash animation to highlight refreshed lists */
-.flash {
-  animation: flashPulse 600ms ease-in-out;
+@media (max-width: 480px) {
+  .modal-content {
+    width: 98%;
+    margin: var(--space-8);
+    max-height: 90vh;
+  }
 }
-
-@keyframes flashPulse {
-  0% { box-shadow: 0 0 0 0 rgba(33,150,243,0.12); }
-  50% { box-shadow: 0 8px 24px -6px rgba(33,150,243,0.18); }
-  100% { box-shadow: none; }
-}
-
-/* Polished login modal specifics */
-#loginModal .modal-header h3 {
-  font-size: var(--font-size-2xl);
-  margin-bottom: 4px;
-}
-#loginModal .modal-body input,
-#loginModal .modal-body select {
-  width: 100%;
-  box-sizing: border-box;
-}
-#loginModal .modal-content { padding-bottom: 0; }
-#loginModal .modal-actions { padding: 12px 20px; }
-#loginModal .btn--primary { min-width: 120px; }
 
 .modal-header {
-  padding: var(--space-20);
+  padding: var(--space-24);
   border-bottom: 1px solid var(--color-card-border);
+  /* Sticky header for long modals */
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .modal-header {
+    padding: var(--space-20);
+  }
 }
 
 .modal-header h3 {
   margin: 0;
   color: var(--color-text);
+  font-size: var(--font-size-xl);
 }
 
 .modal-body {
-  padding: var(--space-20);
+  padding: var(--space-24);
+}
+
+@media (max-width: 768px) {
+  .modal-body {
+    padding: var(--space-20);
+  }
 }
 
 .modal-actions {
-  padding: var(--space-20);
+  padding: var(--space-24);
   border-top: 1px solid var(--color-card-border);
   display: flex;
   justify-content: flex-end;
   gap: var(--space-12);
+  /* Sticky footer for long modals */
+  position: sticky;
+  bottom: 0;
+  background: var(--color-surface);
+}
+
+@media (max-width: 768px) {
+  .modal-actions {
+    padding: var(--space-20);
+    flex-direction: column-reverse;
+    gap: var(--space-10);
+  }
+  
+  .modal-actions .btn {
+    width: 100%;
+  }
 }
 
 /* Loading States */
@@ -1576,20 +1993,20 @@ select.form-control {
 /* Responsive Design */
 @media (max-width: 768px) {
   .main-content {
-    padding: var(--space-16) 0;
+    padding: var(--space-20) 0;
   }
   
   .container {
-    padding-left: var(--space-12);
-    padding-right: var(--space-12);
+    padding-left: var(--space-16);
+    padding-right: var(--space-16);
   }
   
   .welcome-banner {
-    padding: var(--space-24);
+    padding: var(--space-32);
   }
   
   .pickup-form {
-    padding: var(--space-16);
+    padding: var(--space-20);
   }
   
   .request-header {
@@ -1599,6 +2016,257 @@ select.form-control {
   
   .dashboard-actions {
     flex-direction: column;
+    width: 100%;
+  }
+  
+  .dashboard-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--space-16) 0;
+  }
+  
+  .container {
+    padding-left: var(--space-12);
+    padding-right: var(--space-12);
+  }
+  
+  /* Improve typography hierarchy on small screens */
+  h1 {
+    font-size: var(--font-size-3xl);
+  }
+  
+  h2 {
+    font-size: var(--font-size-2xl);
+  }
+  
+  h3 {
+    font-size: var(--font-size-xl);
+  }
+  
+  /* Better button spacing on mobile */
+  .btn {
+    font-size: var(--font-size-base);
+    padding: var(--space-14) var(--space-20);
+  }
+  
+  /* Improve card padding on small screens */
+  .card__body {
+    padding: var(--space-16);
+  }
+}
+
+/* Extra small screens (landscape phones) */
+@media (max-width: 360px) {
+  .container {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+  
+  .btn {
+    padding: var(--space-12) var(--space-16);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Large screens optimizations */
+@media (min-width: 1440px) {
+  .container {
+    padding-left: var(--space-40);
+    padding-right: var(--space-40);
+  }
+  
+  .request-card {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .request-card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* High DPI / Retina display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .btn, .form-control, .card {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Print styles */
+@media print {
+  .header, .nav, .btn, .modal {
+    display: none !important;
+  }
+  
+  .request-card {
+    break-inside: avoid;
+    border: 1px solid #ccc;
+    margin-bottom: var(--space-20);
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Enhanced focus styles for better accessibility */
+@media (prefers-reduced-motion: no-preference) {
+  .btn:focus-visible,
+  .form-control:focus-visible,
+  .role-card:focus-visible,
+  .action-card:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    transform: translateY(-1px);
+  }
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+  .modal-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .welcome-banner {
+    background: linear-gradient(135deg, 
+      rgba(33, 150, 243, 0.9), 
+      rgba(76, 175, 80, 0.9));
+  }
+}
+
+/* Additional utility classes for responsive design */
+.hidden-mobile {
+  display: block;
+}
+
+.show-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hidden-mobile {
+    display: none;
+  }
+  
+  .show-mobile {
+    display: block;
+  }
+}
+
+/* Improved image handling */
+.request-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: var(--space-12) 0;
+}
+
+.request-images img {
+  max-width: 120px;
+  max-height: 90px;
+  object-fit: cover;
+  border-radius: var(--radius-base);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.request-images img:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .request-images img {
+    max-width: 100px;
+    max-height: 75px;
+  }
+}
+
+/* Dealer modal success messaging */
+#modalDealerSuccess, #modalDealerSuccess.small-muted {
+  font-weight: 600;
+}
+
+/* Flash animation to highlight refreshed lists */
+.flash {
+  animation: flashPulse 600ms ease-in-out;
+}
+
+@keyframes flashPulse {
+  0% { box-shadow: 0 0 0 0 rgba(33,150,243,0.12); }
+  50% { box-shadow: 0 8px 24px -6px rgba(33,150,243,0.18); }
+  100% { box-shadow: none; }
+}
+
+/* Polished login modal specifics */
+#loginModal .modal-header h3 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: 4px;
+}
+
+#loginModal .modal-body input,
+#loginModal .modal-body select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#loginModal .modal-content { 
+  padding-bottom: 0; 
+}
+
+#loginModal .modal-actions { 
+  padding: 12px 20px; 
+}
+
+#loginModal .btn--primary { 
+  min-width: 120px; 
+}
+
+/* Safe area insets for modern mobile devices */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.header {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Improved touch scrolling for iOS */
+.modal-content, 
+.requests-list,
+.scrap-list {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better line height for readability on all screens */
+p, .request-info, .form-label {
+  line-height: 1.6;
+}
+
+/* Ensure minimum contrast for accessibility */
+.status-badge,
+.btn {
+  font-weight: var(--font-weight-medium);
+}
+
+/* Add padding for floating action buttons on mobile */
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: var(--space-32);
   }
 }
 
