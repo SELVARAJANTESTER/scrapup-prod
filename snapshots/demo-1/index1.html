@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScrapCollect - Smart Waste Management</title>
+    <!-- inline tiny favicon to prevent 404s -->
+    <link rel="icon" type="image/gif" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+    <!-- define noop for injected/extension handler that may not be present to avoid ReferenceError -->
+    <script>if (typeof window.gIJZ42HZsrODhHbeKekV === 'undefined') { window.gIJZ42HZsrODhHbeKekV = function() { /* noop for injected handlers */ }; }</script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header" id="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="app-title">ScrapCollect</h1>
+                <nav class="nav">
+                    <button class="btn btn--outline btn--sm" id="roleSelector">Switch Role</button>
+                    <button class="btn btn--secondary btn--sm" id="backBtn" style="display: none;">← Back</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Role Selection Screen -->
+        <div class="view" id="roleSelection">
+            <div class="container">
+                <div class="login-bar" style="text-align:right; margin-bottom:8px;">
+                    <input id="loginPhone" type="tel" placeholder="Phone number" style="padding:6px; width:160px;">
+                    <button id="loginBtn" class="btn btn--primary btn--sm">Login</button>
+                    <button id="logoutBtn" class="btn btn--outline btn--sm" style="display:none;">Logout</button>
+                </div>
+                <div class="role-selection">
+                    <div class="welcome-section">
+                        <h2>Welcome to ScrapCollect</h2>
+                        <p>Smart waste management made simple. Choose your role to get started:</p>
+                    </div>
+                    <div class="role-cards">
+                        <div class="role-card" data-role="customer">
+                            <div class="role-icon">👤</div>
+                            <h3>Customer</h3>
+                            <p>Request scrap pickup from your location</p>
+                            <button class="btn btn--primary">Continue as Customer</button>
+                        </div>
+                        <div class="role-card" data-role="dealer">
+                            <div class="role-icon">🚛</div>
+                            <h3>Dealer</h3>
+                            <p>Manage pickup requests and operations</p>
+                            <button class="btn btn--primary">Continue as Dealer</button>
+                        </div>
+                        <div class="role-card" data-role="admin">
+                            <div class="role-icon">⚙️</div>
+                            <h3>Admin</h3>
+                            <p>Monitor system and manage operations</p>
+                            <button class="btn btn--primary">Continue as Admin</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Views -->
+        <div class="view hidden" id="customerHome">
+            <div class="container">
+                <div class="customer-home">
+                    <div class="welcome-banner">
+                        <h2>Welcome Back!</h2>
+                        <p>Ready to turn your scrap into cash?</p>
+                    </div>
+                    
+                    <div class="quick-actions">
+                        <div class="action-card primary-action" data-action="requestPickup">
+                            <div class="action-icon">📦</div>
+                            <h3>Request Pickup</h3>
+                            <p>Schedule a scrap collection</p>
+                        </div>
+                        <div class="action-card" data-action="viewRequests">
+                            <div class="action-icon">📋</div>
+                            <h3>My Requests</h3>
+                            <p>Track your pickup requests</p>
+                        </div>
+                    </div>
+
+                    <div class="pricing-section">
+                        <h3>Current Scrap Prices</h3>
+                        <div class="price-grid" id="priceGrid">
+                            <!-- Price cards will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view hidden" id="requestPickup">
+            <div class="container">
+                <div class="request-form-section">
+                    <h2>Request Scrap Pickup</h2>
+                    <form class="pickup-form" id="pickupForm">
+                        <div class="form-section">
+                            <h3>Customer Details</h3>
+                            <div class="form-group">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" name="customerName" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" name="phone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Pickup Location</h3>
+                            <div class="form-group">
+                                <label class="form-label">Address *</label>
+                                <textarea class="form-control" name="address" rows="3" required placeholder="Enter your complete address"></textarea>
+                            </div>
+                            <button type="button" class="btn btn--secondary location-btn" id="getLocation">
+                                📍 Get Current Location
+                            </button>
+                            <div class="location-display hidden" id="locationDisplay">
+                                <div class="location-info">
+                                    <span class="location-text">Location captured successfully</span>
+                                    <span class="coordinates" id="coordinates"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Scrap Details</h3>
+                            <div class="scrap-items" id="scrapItems">
+                                <div class="scrap-item">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Scrap Type *</label>
+                                            <select class="form-control" name="scrapType" required>
+                                                <option value="">Select scrap type</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Quantity (kg) *</label>
+                                            <input type="number" class="form-control" name="quantity" min="1" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn--outline" id="addScrapItem">+ Add Another Item</button>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Pickup Schedule</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Preferred Date *</label>
+                                    <input type="date" class="form-control" name="preferredDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Preferred Time</label>
+                                    <select class="form-control" name="preferredTime">
+                                        <option value="morning">Morning (9 AM - 12 PM)</option>
+                                        <option value="afternoon">Afternoon (12 PM - 4 PM)</option>
+                                        <option value="evening">Evening (4 PM - 7 PM)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label class="form-label">Special Instructions</label>
+                                <textarea class="form-control" name="instructions" rows="3" placeholder="Any specific instructions for the pickup..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="estimated-value" id="estimatedValue">
+                            <h4>Estimated Value: ₹<span id="totalValue">0</span></h4>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn--primary btn--full-width">Submit Pickup Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="view hidden" id="customerRequests">
+            <div class="container">
+                <div class="requests-section">
+                    <h2>My Pickup Requests</h2>
+                    <div class="requests-list" id="customerRequestsList">
+                        <!-- Customer requests will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dealer Views -->
+        <div class="view hidden" id="dealerDashboard">
+            <div class="container">
+                <div class="dealer-dashboard">
+                    <div class="dealer-header">
+                        <h2>Dealer Dashboard</h2>
+                        <div class="dealer-stats">
+                            <div class="stat-card">
+                                <div class="stat-number" id="pendingRequests">0</div>
+                                <div class="stat-label">Pending Requests</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="completedJobs">0</div>
+                                <div class="stat-label">Completed Jobs</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="dealerRating">0.0</div>
+                                <div class="stat-label">Rating</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="assigned-requests">
+                        <h3>Assigned Requests</h3>
+                        <div class="dealer-requests-list" id="dealerRequestsList">
+                            <!-- Dealer requests will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Views -->
+        <div class="view hidden" id="adminDashboard">
+            <div class="container">
+                <div class="admin-dashboard">
+                    <div class="dashboard-header">
+                        <h2>Admin Dashboard</h2>
+                        <div class="dashboard-actions">
+                            <button class="btn btn--outline" data-admin-view="requests">Manage Requests</button>
+                            <button class="btn btn--outline" data-admin-view="dealers">Manage Dealers</button>
+                            <button class="btn btn--outline" data-admin-view="scrapTypes">Manage Scrap Types</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRequests">0</div>
+                            <div class="stat-label">Total Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeDealers">0</div>
+                            <div class="stat-label">Active Dealers</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="completedPickups">0</div>
+                            <div class="stat-label">Completed Pickups</div>
+                        </div>
+                            

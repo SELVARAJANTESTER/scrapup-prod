@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ScrapUp — Home</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:#0f172a;color:#fff;margin:0;padding:20px}
+    .container{max-width:1100px;margin:0 auto}
+    .header{background:linear-gradient(90deg,#2bb7ff,#21c77a);padding:28px;border-radius:10px;margin-bottom:18px;text-align:center}
+    .row{display:flex;gap:18px}
+    .card{flex:1;background:rgba(255,255,255,0.03);padding:20px;border-radius:10px}
+    .card h3{margin:0 0 8px 0}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+    input,select,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#fff}
+    button{padding:10px 14px;border-radius:8px;border:0;background:linear-gradient(90deg,#00a86b,#008f6a);color:#fff;cursor:pointer}
+    .muted{opacity:0.8;font-size:14px}
+    .requests-list{margin-top:12px}
+    .request-item{background:rgba(0,0,0,0.25);padding:10px;border-radius:8px;margin-bottom:8px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin:0">Welcome Back!</h1>
+      <p style="margin:6px 0 0 0">Request Pickup · Track Requests · View Prices</p>
+    </div>
+
+    <div class="row">
+      <div class="card" id="actionsCard">
+        <h3>Quick Actions</h3>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="btnRequestPickup">Request Pickup</button>
+          <button id="btnMyRequests" style="background:transparent;border:1px solid rgba(255,255,255,0.08)">My Requests</button>
+        </div>
+        <div class="muted" style="margin-top:12px">Signed in as <span id="signedAs">—</span></div>
+      </div>
+
+      <div class="card" id="pricesCard">
+        <h3>Current Scrap Prices</h3>
+        <div id="priceGrid" class="grid">
+          <!-- populated dynamically -->
+        </div>
+      </div>
+
+      <div class="card" id="formCard" style="display:none">
+        <h3>Request Pickup</h3>
+        <form id="pickupForm">
+          <label>Full name</label>
+          <input name="customerName" required>
+          <label style="margin-top:8px">Phone</label>
+          <input name="phone" required>
+          <label style="margin-top:8px">Address</label>
+          <textarea name="address" rows="2"></textarea>
+
+          <div style="margin-top:8px">
+            <h4 style="margin:8px 0">Scrap Items</h4>
+            <div id="scrapItemsContainer"></div>
+            <button type="button" id="addScrapItemBtn" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,0.08);padding:8px;border-radius:6px">+ Add Item</button>
+          </div>
+
+          <div style="margin-top:12px">
+            <button type="button" class="btn" id="getLocation">📍 Get Current Location</button>
+            <div id="locationDisplay" style="margin-top:8px;display:none;color:#d1fae5">
+              <div id="coordinates"></div>
+              <div id="accuracy" style="margin-top:4px;font-size:13px;opacity:0.9"></div>
+              <div id="locationWarning" style="margin-top:6px;color:#fca5a5;display:none">Location accuracy is low — try again outdoors or allow high accuracy.</div>
+              <div id="currentLocationMap" style="margin-top:8px"></div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <div style="flex:1">
+              <label>Preferred Date</label>
+              <input type="date" name="preferredDate">
+            </div>
+            <div style="width:160px">
+              <label>Preferred Time</label>
+              <select name="preferredTime">
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+                <option value="evening">Evening</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label>Special Instructions</label>
+            <textarea name="instructions" rows="2"></textarea>
+          </div>
+
+          <div class="estimated-value" id="estimatedValue" style="margin-top:12px">
+            <h4>Estimated Value: ₹<span id="totalValue">0</span></h4>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button type="submit">Submit Request</button>
+            <button type="button" id="btnCancelForm" style="background:transparent;border:1px solid rgba(255,255,255,0.08)">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="requestsSection" style="margin-top:16px">
+      <h3>My Requests</h3>
+      <div id="requestsList" class="requests-list muted">Loading…</div>
+    </div>
+  </div>
+
+<script>
+// Simple customer home that expects `customerAuth` in localStorage and optional `scrapAuthToken`.
+(function(){
+  function getAuth() { try { return JSON.parse(localStorage.getItem('customerAuth')||'null'); } catch(e){return null;} }
+  function getToken(){ try { return localStorage.getItem('scrapAuthToken')||null } catch(e){return null;} }
+  const user = getAuth();
+  const token = getToken();
+  if (!user || !user.phone) {
+    // not logged in — send back to login
+    try { window.location.href = 'customer_login.html'; } catch(e){}
+    return;
+  }
+  document.getElementById('signedAs').textContent = user.name || user.phone || user.role;
+
+  async function fetchScrapTypes(){
+    const headers = {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    try {
+      const r = await fetch('/api/scrapTypes', { headers, credentials:'same-origin' });
+      if (!r.ok) throw new Error('fetch failed');
+      return await r.json();
+    } catch(e){
+      return [ { name:'Metal Scrap', pricePerKg:25, description:'Iron, steel, aluminum, copper' }, { name:'Plastic Bottles', pricePerKg:12, description:'PET bottles' } ];
+    }
+  }
+
+  let currentLocation = null;
+
+  // (Using same simple geolocation flow as `index1.html`)
+  // We'll call navigator.geolocation.getCurrentPosition with high accuracy and short timeout.
+
+  async function fetchRequests(){
+    const headers = {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const phone = (function(){ try { return (user.phone||'').replace(/\D/g,'').slice(-10); } catch(e){ return user.phone; } })();
+    const q = phone ? '?phone='+encodeURIComponent(phone) : '';
+    try {
+      const r = await fetch('/api/requests' + q, { headers, credentials: 'same-origin' });
+      if (!r.ok) throw new Error('fetch failed');
+      return await r.json();
+    } catch(e){ return []; }
+  }
+
+  // populate price grid
+  (async function(){
+    const types = await fetchScrapTypes();
+    const grid = document.getElementById('priceGrid');
+    grid.innerHTML = '';
+    (types||[]).slice(0,6).forEach(t => {
+      const el = document.createElement('div');
+      el.style.padding = '12px'; el.style.borderRadius='8px'; el.style.background='rgba(0,0,0,0.25)';
+      el.innerHTML = `<strong>${t.name}</strong><div style="color:#4ade80;margin-top:6px;font-weight:700">${t.pricePerKg?('₹'+t.pricePerKg+'/kg'):(t.price||'—')}</div><div style="opacity:0.85;margin-top:6px;font-size:13px">${t.description||''}</div>`;
+      grid.appendChild(el);
+    });
+    // fill scrap type select
+    const select = document.getElementById('scrapTypeSelect');
+    select.innerHTML = '';
+    (types||[]).forEach(t => {
+      const opt = document.createElement('option'); opt.value = t.name; opt.textContent = t.name; select.appendChild(opt);
+    });
+  })();
+
+  // populate requests
+  async function refreshRequests(){
+    const list = document.getElementById('requestsList');
+    list.innerHTML = 'Loading…';
+    const rs = await fetchRequests();
+    if (!rs || rs.length === 0) { list.innerHTML = '<div class="muted">No requests yet</div>'; return; }
+    list.innerHTML = '';
+    rs.forEach(r => {
+      const item = document.createElement('div'); item.className='request-item';
+      item.innerHTML = `<div><strong>#${r.id||r.requestId||''} ${r.status||''}</strong></div><div>${r.requestDate||''} · ${r.scrapTypes? (Array.isArray(r.scrapTypes)? r.scrapTypes.map(s=>s.type+'('+s.quantity+')').join(', '):'') : ''}</div><div style="opacity:0.85">${r.address||''}</div>`;
+      list.appendChild(item);
+    });
+  }
+
+  refreshRequests();
+
+  // UI wiring
+  const btnPickup = document.getElementById('btnRequestPickup');
+  const btnMyReq = document.getElementById('btnMyRequests');
+  const formCard = document.getElementById('formCard');
+  const actionsCard = document.getElementById('actionsCard');
+  const requestsSection = document.getElementById('requestsSection');
+
+  btnPickup.addEventListener('click', () => {
+    formCard.style.display = '';
+    requestsSection.style.display = 'none';
+    // prefill
+    const f = document.querySelector('#pickupForm');
+    if (f) {
+      f.customerName.value = user.name || '';
+      f.phone.value = user.phone || '';
+      f.address.value = '';
+    }
+  });
+  btnMyReq.addEventListener('click', () => {
+    formCard.style.display = 'none';
+    requestsSection.style.display = '';
+    refreshRequests();
+  });
+  document.getElementById('btnCancelForm').addEventListener('click', () => { formCard.style.display='none'; requestsSection.style.display=''; });
+
+  // submit pickup (collect multi-item scrap rows and include location)
+  document.getElementById('pickupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    // collect scrap items
+    const items = [];
+    document.querySelectorAll('.scrap-item-row').forEach(row => {
+      const sel = row.querySelector('select[name="scrapType"]');
+      const q = row.querySelector('input[name="quantity"]');
+      if (sel && q) {
+        const type = sel.value || '';
+        const qty = Number(q.value) || 0;
+        if (type && qty > 0) items.push({ type, quantity: qty });
+      }
+    });
+    // fallback to single fields if none
+    if (items.length === 0) {
+      const singleType = (f.scrapType && f.scrapType.value) ? f.scrapType.value : null;
+      const singleQty = (f.quantity && Number(f.quantity.value)) ? Number(f.quantity.value) : 0;
+      if (singleType) items.push({ type: singleType, quantity: singleQty });
+    }
+
+    const payload = {
+      customerName: f.customerName.value,
+      phone: (f.phone.value||'').replace(/\D/g,'').slice(-10),
+      address: f.address.value,
+      scrapTypes: items,
+      preferredDate: f.preferredDate && f.preferredDate.value ? f.preferredDate.value : new Date().toISOString().split('T')[0],
+      preferredTime: f.preferredTime && f.preferredTime.value ? f.preferredTime.value : undefined,
+      instructions: f.instructions && f.instructions.value ? f.instructions.value : undefined
+    };
+
+    // include captured location if available
+    if (currentLocation && currentLocation.lat && currentLocation.lng) {
+      payload.lat = currentLocation.lat;
+      payload.lng = currentLocation.lng;
+    }
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    try {
+      const res = await fetch('/api/requests', { method: 'POST', headers, credentials: 'same-origin', body: JSON.stringify(payload) });
+      if (!res.ok) { const t = await res.text(); throw new Error(t||'failed'); }
+      const created = await res.json();
+      alert('Request submitted: ' + (created.id||created.requestId||''));
+      f.reset(); formCard.style.display='none'; requestsSection.style.display='';
+      // clear stored location
+      currentLocation = null; document.getElementById('locationDisplay').style.display='none'; document.getElementById('coordinates').textContent = '';
+      refreshRequests();
+    } catch(err) {
+      alert('Failed to submit request: ' + (err && err.message));
+    }
+  });
+
+})();
+</script>
+<!-- Set API base at deploy time. When developing locally, prefer the running local server. -->
+<script>
+  (function(){
+    try {
+      var base = '';
+      if (window.location && window.location.protocol === 'file:') {
+        base = 'http://localhost:3000';
+      } else if (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        base = window.location.protocol + '//' + window.location.host;
+      }
+      window.__SCRAP_API_BASE = base || '';
+      try { var ls = localStorage.getItem('scrapApiBase'); if (ls && (ls.indexOf('YOUR_BACKEND')!==-1 || ls.indexOf('your-backend')!==-1)) localStorage.removeItem('scrapApiBase'); } catch(e){}
+    } catch(e) { window.__SCRAP_API_BASE = ''; }
+  })();
+</script>
+<script>
+// enhance form: multi-item scrap handling, estimate calculation
+(function(){
+  function money(n){ return Math.round(n*100)/100; }
+  const scrapContainer = document.getElementById('scrapItemsContainer');
+  const addBtn = document.getElementById('addScrapItemBtn');
+  const totalValueEl = document.getElementById('totalValue');
+  const priceMap = {};
+
+  function makeItem(defaultType, defaultQty){
+    const wrapper = document.createElement('div'); wrapper.style.marginTop='8px'; wrapper.className='scrap-item-row';
+    const type = document.createElement('select'); type.name='scrapType'; type.style.marginRight='8px'; type.style.padding='6px';
+    const qty = document.createElement('input'); qty.name='quantity'; qty.type='number'; qty.step='0.1'; qty.value=defaultQty||1; qty.style.width='100px'; qty.style.marginRight='8px'; qty.style.padding='6px';
+    const remove = document.createElement('button'); remove.type='button'; remove.textContent='Remove'; remove.style.background='transparent'; remove.style.border='1px solid rgba(255,255,255,0.08)'; remove.style.padding='6px'; remove.style.borderRadius='6px';
+    wrapper.appendChild(type); wrapper.appendChild(qty); wrapper.appendChild(remove);
+    remove.addEventListener('click', ()=>{ wrapper.remove(); recalc(); });
+    qty.addEventListener('input', recalc);
+    type.addEventListener('change', recalc);
+    return { wrapper, type, qty };
+  }
+
+  function recalc(){
+    let total = 0;
+    document.querySelectorAll('.scrap-item-row').forEach(row => {
+      const sel = row.querySelector('select[name="scrapType"]');
+      const q = row.querySelector('input[name="quantity"]');
+      const t = sel && sel.value; const qty = parseFloat(q && q.value) || 0;
+      const p = priceMap[t] || 0;
+      total += (p * qty);
+    });
+    totalValueEl.textContent = money(total);
+  }
+
+  // populate scrap type options from existing select (filled earlier)
+  function populateTypes(){
+    const source = document.getElementById('scrapTypeSelect');
+    const opts = [];
+    if (source) { for (const o of source.options) opts.push({ value: o.value, text: o.text }); }
+    // if none, create defaults
+    if (opts.length === 0) opts.push({ value: 'Metal Scrap', text: 'Metal Scrap' }, { value: 'Plastic Bottles', text: 'Plastic Bottles' });
+    // fetch prices to populate priceMap
+    (async function(){
+      try {
+        const r = await fetch('/api/scrapTypes');
+        if (r.ok) {
+          const arr = await r.json();
+          arr.forEach(a => { priceMap[a.name || a.id] = a.pricePerKg || a.price || 0; });
+        }
+      } catch(e){}
+      // fill current selects
+      function addOne(){ const it = makeItem(); opts.forEach(o => { const op = document.createElement('option'); op.value = o.value; op.textContent = o.text; it.type.appendChild(op); }); scrapContainer.appendChild(it.wrapper); }
+      // ensure at least 1
+      if (!scrapContainer.querySelector('.scrap-item-row')) addOne();
+      recalc();
+    })();
+  }
+  addBtn.addEventListener('click', ()=>{ const it = makeItem(); // populate options
+    const source = document.getElementById('scrapTypeSelect'); if (source) { for (const o of source.options) { const op = document.createElement('option'); op.value=o.value; op.textContent=o.text; it.type.appendChild(op); } }
+    scrapContainer.appendChild(it.wrapper); recalc(); });
+  populateTypes();
+  // wire getLocation button
+  document.getElementById('getLocation').addEventListener('click', () => {
+    const btn = document.getElementById('getLocation'); btn.textContent='Getting...'; btn.disabled=true;
+    if (!navigator.geolocation) {
+      alert('Geolocation not available in this browser'); btn.textContent='📍 Get Current Location'; btn.disabled=false; return;
+    }
+    // Request high accuracy and short timeout to improve reliability
+    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+    // Use same approach as `index1.html`: try getCurrentPosition and fallback to a nearby random location
+    const onSuccess = (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      currentLocation = { lat, lng, accuracy: pos.coords.accuracy };
+      document.getElementById('coordinates').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      const accEl = document.getElementById('accuracy'); if (accEl && pos.coords.accuracy !== undefined) accEl.textContent = 'Accuracy: ' + Math.round(pos.coords.accuracy) + ' m';
+      const warnEl = document.getElementById('locationWarning'); if (pos.coords.accuracy && pos.coords.accuracy > 200) { if (warnEl) warnEl.style.display = ''; } else { if (warnEl) warnEl.style.display = 'none'; }
+      document.getElementById('locationDisplay').style.display='block';
+      const map = document.getElementById('currentLocationMap'); if (map) map.innerHTML = `<iframe width="100%" height="140" frameborder="0" style="border:0" src="https://www.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed"></iframe>`;
+      btn.textContent='📍 Location Captured'; btn.disabled=true; btn.style.background=''; btn.style.color='';
+    };
+
+    const onError = (err) => {
+      // fallback: pick a nearby random location from predefined list (same heuristic used in index1.js)
+      const fallbackList = [ {lat:28.7041,lng:77.1025}, {lat:28.5355,lng:77.2430}, {lat:28.6466,lng:77.3179}, {lat:28.6692,lng:77.1022}, {lat:28.6448,lng:77.2167} ];
+      const randomLocation = fallbackList[Math.floor(Math.random() * fallbackList.length)];
+      currentLocation = { lat: randomLocation.lat + (Math.random() - 0.5) * 0.01, lng: randomLocation.lng + (Math.random() - 0.5) * 0.01 };
+      document.getElementById('coordinates').textContent = `${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}`;
+      document.getElementById('locationDisplay').style.display='block';
+      const map = document.getElementById('currentLocationMap'); if (map) map.innerHTML = `<iframe width="100%" height="140" frameborder="0" style="border:0" src="https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lng}&hl=es;z=14&output=embed"></iframe>`;
+      btn.textContent='📍 Location Captured'; btn.disabled=true; btn.style.background='var(--color-app-success)'; btn.style.color='white';
+      alert('Location captured (approx) — geolocation not available or failed');
+    };
+
+    if (navigator && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, { enableHighAccuracy: true, timeout: 8000 });
+    } else {
+      onError(new Error('Geolocation not supported'));
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

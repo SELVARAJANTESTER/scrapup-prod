@@ -1,0 +1,32 @@
+name: CI Deploy Example
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Node.js setup
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install dependencies (backend)
+        run: |
+          cd ./
+          npm install
+
+      - name: Run tests (none configured)
+        run: echo "No tests configured"
+
+      # Example: notify Render or run a CLI deploy. For Render, use the Render GitHub integration instead of a token-based deploy.
+      - name: Example step - Print deploy note
+        run: |
+          echo "On push to main you can configure Render/Netlify to auto-deploy this repo."
+
+# NOTE: This workflow is a template. Replace or extend steps with your Render/Netlify CLI or use their GitHub integrations for automatic deploys.

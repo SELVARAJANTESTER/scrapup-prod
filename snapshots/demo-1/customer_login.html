@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ScrapCollect — Customer Login</title>
+  <style>
+    :root{--accent:#00a86b;--card:#ffffff;--muted:#6b7280}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+    body{display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0f172a 0%, #071024 50%), url('https://images.unsplash.com/photo-1508780709619-79562169bc64?auto=format&fit=crop&w=1600&q=60') center/cover no-repeat; color:#fff}
+    .overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.6));}
+    .card{position:relative;z-index:2;max-width:920px;width:100%;display:grid;grid-template-columns:1fr 420px;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    .hero{padding:48px;background:linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));display:flex;flex-direction:column;gap:18px}
+    .hero h1{margin:0;font-size:28px;letter-spacing:-0.4px}
+    .hero p{margin:0;color:var(--muted)}
+    .benefits{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+    .benefit{background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:8px;font-size:13px}
+    form{padding:36px;background:var(--card);color:#0b1220}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(180deg,var(--accent),#007a57);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    label{display:block;font-size:13px;margin-bottom:6px;color:#374151}
+    input[type=tel]{width:100%;padding:12px;border-radius:8px;border:1px solid #e5e7eb;font-size:15px}
+    .row{margin-top:12px}
+    .btn{display:inline-block;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;border:0}
+    .btn--primary{background:linear-gradient(90deg,var(--accent),#008f6a);color:#fff}
+    .btn--ghost{background:transparent;border:1px solid #e6e7eb;color:#0b1220}
+    .meta{font-size:13px;color:#6b7280;margin-top:8px}
+    .small{font-size:13px;color:#475569}
+    .center{display:flex;align-items:center;gap:8px}
+    .success{background:#ecfdf5;color:#064e3b;padding:10px;border-radius:8px;margin-top:10px}
+    .error{background:#fff1f2;color:#7f1d1d;padding:10px;border-radius:8px;margin-top:10px}
+    @media(max-width:960px){.card{grid-template-columns:1fr;}.hero{display:none}.card{border-radius:12px}}
+  </style>
+</head>
+<body>
+  <div class="overlay" aria-hidden="true"></div>
+  <main class="card" role="main">
+    <section class="hero" aria-hidden="true">
+      <div class="brand">
+        <div class="logo">SC</div>
+        <div>
+          <h1>ScrapCollect — Customer Portal</h1>
+          <p class="small">Quickly request pickup and track your scrap collections.</p>
+        </div>
+      </div>
+
+      <p style="margin-top:18px">Fast, contactless pickups. Transparent pricing. Local dealers ready to collect your scrap.</p>
+
+      <div class="benefits">
+        <div class="benefit">Schedule pickups in 1 minute</div>
+        <div class="benefit">Transparent per-kg pricing</div>
+        <div class="benefit">Secure phone-based login</div>
+        <div class="benefit">Instant confirmations</div>
+      </div>
+
+      <div style="margin-top:auto;color:var(--muted);font-size:13px">Share this single link with customers for a simple, low-friction login experience.</div>
+    </section>
+
+    <form id="customerLoginForm" aria-label="Customer login form">
+      <h2 style="margin:0 0 8px 0">Sign in to request pickup</h2>
+      <p class="small">Enter your 10-digit mobile number. No password required.</p>
+
+      <div class="row">
+        <label for="phone">Mobile number</label>
+        <input id="phone" name="phone" type="tel" inputmode="numeric" pattern="\d{10}" maxlength="10" placeholder="e.g. 8000000001" required>
+      </div>
+
+      <div class="row">
+        <button type="submit" class="btn btn--primary">Continue</button>
+        <button type="button" id="openApp" class="btn btn--ghost" style="margin-left:8px">Open App (for returning users)</button>
+      </div>
+
+      <div id="feedback" aria-live="polite"></div>
+
+      <p class="meta">By continuing you agree to our terms. This page only creates a customer account (role: customer).</p>
+    </form>
+  </main>
+
+  <script>
+    // normalize to last 10 digits
+    function normalizePhone10(phone) {
+      if (!phone) return null;
+      const digits = String(phone).replace(/\D/g, '');
+      if (digits.length < 10) return null;
+      return digits.slice(-10);
+    }
+
+    const form = document.getElementById('customerLoginForm');
+    const feedback = document.getElementById('feedback');
+    const openApp = document.getElementById('openApp');
+
+    function showMessage(msg, type='info'){
+      feedback.innerHTML = `<div class="${type==='error'?'error':'success'}">${msg}</div>`;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      feedback.innerHTML = '';
+      const raw = document.getElementById('phone').value || '';
+      const phone = normalizePhone10(raw);
+      if (!phone) return showMessage('Enter a valid 10-digit phone number', 'error');
+
+      showMessage('Checking account...', 'success');
+      try {
+        // try get user
+        let res = await fetch('/api/users?phone=' + encodeURIComponent(phone));
+        let user = null;
+        if (res.ok) user = await res.json();
+  if (!user) {
+          // create customer user explicitly
+          const create = await fetch('/api/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ phone: phone, role: 'customer' }) });
+          if (!create.ok) throw new Error('Create failed');
+          user = await create.json();
+        }
+  // ensure role is present and store a lightweight auth object so the main app can pick it up
+  try { user.role = user.role || 'customer'; user.standalone = true; localStorage.setItem('customerAuth', JSON.stringify(user)); } catch(e){}
+
+        showMessage('Logged in successfully — redirecting to the app…');
+      setTimeout(() => { window.location.href = 'home.html'; }, 900);
+      } catch (err) {
+        console.error(err);
+        showMessage('Server error while logging in. Try again or contact support.', 'error');
+      }
+    });
+
+    openApp.addEventListener('click', () => {
+    window.location.href = 'home.html';
+    });
+  </script>
+  <!-- Set API base at deploy time. When developing locally, prefer the running local server. -->
+  <script>
+    (function(){
+      try {
+        var base = '';
+        if (window.location && window.location.protocol === 'file:') {
+          base = 'http://localhost:3000';
+        } else if (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          base = window.location.protocol + '//' + window.location.host;
+        }
+        window.__SCRAP_API_BASE = base || '';
+        try { var ls = localStorage.getItem('scrapApiBase'); if (ls && (ls.indexOf('YOUR_BACKEND')!==-1 || ls.indexOf('your-backend')!==-1)) localStorage.removeItem('scrapApiBase'); } catch(e){}
+      } catch(e) { window.__SCRAP_API_BASE = ''; }
+    })();
+  </script>
+</body>
+</html>

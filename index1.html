@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScrapCollect - Smart Waste Management</title>
+    <!-- inline tiny favicon to prevent 404s -->
+    <link rel="icon" type="image/gif" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+    <!-- define noop for injected/extension handler that may not be present to avoid ReferenceError -->
+    <script>if (typeof window.gIJZ42HZsrODhHbeKekV === 'undefined') { window.gIJZ42HZsrODhHbeKekV = function() { /* noop for injected handlers */ }; }</script>
+    <link rel="stylesheet" href="style.css">
+    <!-- Leaflet for interactive map picker -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+e2e2m4b6Yc3r3oQ6bY4q6k3tGkKxq8a3m0v+0zR0=" crossorigin=""/>
+    <style>
+        /* Modal responsive: stack columns on small screens */
+        @media (max-width: 720px) {
+            #requestEditModal .modal-body { flex-direction: column; }
+            #requestEditModal .modal-right { width: 100% !important; min-width: auto !important; border-left: none !important; padding-left: 0 !important; }
+            #requestEditModal .modal-left { width: 100% !important; }
+            #requestEditModal .modal-content { width: 96vw; max-width: 720px; }
+        }
+        /* Keep scrap rows single-line on wider screens, allow wrap on very narrow screens */
+        #requestEditModal .modal-scrap-row { flex-wrap: nowrap; }
+        @media (max-width: 420px) {
+            #requestEditModal .modal-scrap-row { flex-wrap: wrap; }
+            #requestEditModal .modal-scrap-rate, #requestEditModal .modal-scrap-qty { width: 48% !important; }
+            #requestEditModal .modal-scrap-remove { width: 100% !important; }
+        }
+        /* Muted smaller rate input appearance */
+        .modal-scrap-rate { font-size: 0.9em; color: var(--color-text-secondary); }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header" id="header">
+        <div class="container">
+                <div class="header-content">
+                <h1 class="app-title"><span data-i18n="appTitle">ScrapCollect</span></h1>
+                <nav class="nav">
+                    <button class="btn btn--outline btn--sm" id="roleSelector"><span data-i18n="switchRole">Switch Role</span></button>
+                    <button class="btn btn--secondary btn--sm" id="backBtn" style="display: none;"><span class="icon">←</span> <span data-i18n="back">Back</span></button>
+                    <!-- Logout in header for all views -->
+                    <button class="btn btn--outline btn--sm" id="logoutBtnHeader" style="display:none;"><span data-i18n="logout">Logout</span></button>
+                    <!-- Language selector -->
+                    <select id="langSelect" style="margin-left:8px;padding:6px;border-radius:6px;">
+                        <option value="en">English</option>
+                        <option value="ta">தமிழ்</option>
+                        <option value="hi">हिन्दी</option>
+                    </select>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Role Selection Screen -->
+        <div class="view" id="roleSelection">
+            <div class="container">
+                <div class="login-bar" style="text-align:right; margin-bottom:8px;">
+                    <input id="loginPhone" type="tel" placeholder="Phone number" style="padding:6px; width:160px;" data-i18n="phone">
+                    <button id="loginBtn" class="btn btn--primary btn--sm"><span data-i18n="signIn">Login</span></button>
+                    <button id="logoutBtn" class="btn btn--outline btn--sm" style="display:none;"><span data-i18n="logout">Logout</span></button>
+                </div>
+                <div class="role-selection">
+                        <div class="welcome-section">
+                        <h2><span data-i18n="welcome">Welcome to ScrapCollect</span></h2>
+                        <p><span data-i18n="welcomeTag">Smart waste management made simple. Choose your role to get started:</span></p>
+                    </div>
+                    <div class="role-cards">
+                        <div class="role-card" data-role="customer">
+                            <div class="role-icon">👤</div>
+                            <h3><span data-i18n="customer">Customer</span></h3>
+                            <p><span data-i18n="requestPickup">Request scrap pickup from your location</span></p>
+                            <button class="btn btn--primary" data-i18n="continueAsCustomer"><span data-i18n="continueAsCustomer">Continue as Customer</span></button>
+                        </div>
+                        <div class="role-card" data-role="dealer">
+                            <div class="role-icon">🚛</div>
+                            <h3><span data-i18n="dealer">Dealer</span></h3>
+                            <p><span data-i18n="myRequests">Manage pickup requests and operations</span></p>
+                            <button class="btn btn--primary" data-i18n="continueAsDealer"><span data-i18n="continueAsDealer">Continue as Dealer</span></button>
+                        </div>
+                        <div class="role-card" data-role="admin">
+                            <div class="role-icon">⚙️</div>
+                            <h3><span data-i18n="admin">Admin</span></h3>
+                            <p><span data-i18n="currentPrices">Monitor system and manage operations</span></p>
+                            <button class="btn btn--primary" data-i18n="continueAsAdmin"><span data-i18n="continueAsAdmin">Continue as Admin</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Views -->
+        <div class="view hidden" id="customerHome">
+            <div class="container">
+                <div class="customer-home">
+                    <div class="welcome-banner">
+                        <h2><span data-i18n="welcomeBack">Welcome Back!</span></h2>
+                        <p><span data-i18n="welcomeTag">Ready to turn your scrap into cash?</span></p>
+                    </div>
+                    
+                    <div class="quick-actions">
+                            <div class="action-card primary-action" data-action="requestPickup">
+                            <div class="action-icon">📦</div>
+                            <h3><span data-i18n="requestPickup">Request Pickup</span></h3>
+                            <p><span data-i18n="requestPickupDesc">Schedule a scrap collection</span></p>
+                        </div>
+                            <div class="action-card" data-action="viewRequests">
+                            <div class="action-icon">📋</div>
+                            <h3><span data-i18n="myRequests">My Requests</span></h3>
+                            <p><span data-i18n="trackRequests">Track your pickup requests</span></p>
+                        </div>
+                    </div>
+
+                    <div class="pricing-section">
+                        <h3 data-i18n="currentPrices">Current Scrap Prices</h3>
+                        <div class="price-grid" id="priceGrid">
+                            <!-- Price cards will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="view hidden" id="requestPickup">
+            <div class="container">
+                <div class="request-form-section">
+                    <h2><span data-i18n="requestPickup">Request Scrap Pickup</span></h2>
+                    <form class="pickup-form" id="pickupForm">
+                        <div class="form-section">
+                            <h3><span data-i18n="customerDetails">Customer Details</span></h3>
+                            <div class="form-group">
+                                    <label class="form-label"><span data-i18n="fullName">Full Name *</span></label>
+                                <input type="text" class="form-control" name="customerName" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                            <label class="form-label"><span data-i18n="phone">Phone Number *</span></label>
+                                            <input type="tel" class="form-control" name="phone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Pickup Location</h3>
+                            <div class="form-group">
+                                <label class="form-label">Address *</label>
+                                <textarea class="form-control" name="address" rows="3" required placeholder="Enter your complete address"></textarea>
+                            </div>
+                            <button type="button" class="btn btn--secondary location-btn" id="getLocation">
+                                📍 Get Current Location
+                            </button>
+                            <div class="location-display hidden" id="locationDisplay">
+                                <div class="location-info">
+                                    <span class="location-text">Location captured successfully</span>
+                                    <span class="coordinates" id="coordinates"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Scrap Details</h3>
+                            <div class="scrap-items" id="scrapItems">
+                                <div class="scrap-item">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Scrap Type *</label>
+                                            <select class="form-control" name="scrapType" required>
+                                                <option value="">Select scrap type</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Quantity (kg) *</label>
+                                            <input type="number" class="form-control" name="quantity" min="1" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn--outline" id="addScrapItem">+ Add Another Item</button>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Pickup Schedule</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Preferred Date *</label>
+                                    <input type="date" class="form-control" name="preferredDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Preferred Time</label>
+                                    <select class="form-control" name="preferredTime">
+                                        <option value="morning">Morning (9 AM - 12 PM)</option>
+                                        <option value="afternoon">Afternoon (12 PM - 4 PM)</option>
+                                        <option value="evening">Evening (4 PM - 7 PM)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label class="form-label">Special Instructions</label>
+                                <textarea class="form-control" name="instructions" rows="3" placeholder="Any specific instructions for the pickup..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="estimated-value" id="estimatedValue">
+                            <h4><span data-i18n="estimatedValue">Estimated Value:</span> ₹<span id="totalValue">0</span></h4>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn--primary btn--full-width">Submit Pickup Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="view hidden" id="customerRequests">
+            <div class="container">
+                <div class="requests-section">
+                    <h2 data-i18n="myPickupRequests">My Pickup Requests</h2>
+                    <div class="requests-list" id="customerRequestsList">
+                        <!-- Customer requests will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dealer Views -->
+        <div class="view hidden" id="dealerDashboard">
+            <div class="container">
+                <div class="dealer-dashboard">
+                    <div class="dealer-header">
+                        <h2>Dealer Dashboard</h2>
+                        <div class="dealer-stats">
+                            <div class="stat-card">
+                                <div class="stat-number" id="pendingRequests">0</div>
+                                <div class="stat-label">Pending Requests</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="completedJobs">0</div>
+                                <div class="stat-label">Completed Jobs</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="dealerRating">0.0</div>
+                                <div class="stat-label">Rating</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="assigned-requests">
+                        <h3>Assigned Requests</h3>
+                        <div class="dealer-requests-list" id="dealerRequestsList">
+                            <!-- Dealer requests will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Views -->
+        <div class="view hidden" id="adminDashboard">
+            <div class="container">
+                <div class="admin-dashboard">
+                    <div class="dashboard-header">
+                        <h2>Admin Dashboard</h2>
+                        <div class="dashboard-actions">
+                            <button class="btn btn--outline" data-admin-view="requests">Manage Requests</button>
+                            <button class="btn btn--outline" data-admin-view="dealers">Manage Dealers</button>
+                            <button class="btn btn--outline" data-admin-view="scrapTypes">Manage Scrap Types</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRequests">0</div>
+                            <div class="stat-label">Total Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeDealers">0</div>
+                            <div class="stat-label">Active Dealers</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="completedPickups">0</div>
+                            <div class="stat-label">Completed Pickups</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRevenue">₹0</div>
+                            <div class="stat-label">Total Revenue</div>
+                        </div>
+                    </div>
+
+                    <div class="admin-sections">
+                        <div class="admin-section" id="adminRequests">
+                            <h3>All Requests</h3>
+                            <div class="admin-requests-list" id="adminRequestsList">
+                                <!-- Admin requests will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="admin-section hidden" id="adminDealers">
+                            <h3>Dealer Management</h3>
+                            <div style="margin-bottom:12px;">
+                                <button class="btn btn--primary" data-admin-action="showAddDealer">+ Add Dealer</button>
+                            </div>
+                            <div class="dealers-list" id="dealersList">
+                                <!-- Dealers will be populated by JavaScript -->
+                            </div>
+                            <div id="dealerForm" class="hidden" style="margin-top:12px;">
+                                <h4 id="dealerFormTitle">Add Dealer</h4>
+                                <div class="form-row">
+                                    <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="dealerName"></div>
+                                    <div class="form-group"><label class="form-label">Phone (10 digits)</label><input class="form-control" id="dealerPhone"><div id="dealerPhoneError" class="field-error" style="color:var(--color-error);font-size:0.9em;margin-top:6px;display:none;"></div></div>
+                                    <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="dealerEmail"></div>
+                                </div>
+                                <div class="form-row" style="margin-top:8px;">
+                                    <div class="form-group"><label class="form-label">Service Areas (comma separated)</label><input class="form-control" id="dealerServiceAreas" placeholder="e.g. North Delhi, Central Delhi"></div>
+                                    <div class="form-group"><label class="form-label">Specialties (comma separated)</label><input class="form-control" id="dealerSpecialties" placeholder="e.g. Metal, Electronics"></div>
+                                </div>
+                                <div class="form-row" style="margin-top:8px;">
+                                    <div class="form-group"><label class="form-label">Active</label><select class="form-control" id="dealerActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+                                    <div class="form-group"><label class="form-label">Rating</label><input class="form-control" id="dealerRatingInput" type="number" step="0.1" min="0" max="5"></div>
+                                    <div class="form-group"><label class="form-label">Completed Jobs</label><input class="form-control" id="dealerCompletedJobs" type="number" min="0"></div>
+                                </div>
+                                <div style="margin-top:8px;">
+                                    <button class="btn btn--primary" data-admin-action="saveDealer">Save</button>
+                                    <button class="btn btn--outline" data-admin-action="cancelDealer">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-section hidden" id="adminScrapTypes">
+                            <h3>Scrap Types & Prices</h3>
+                            <div style="margin-bottom:12px;">
+                                <button class="btn btn--primary" data-admin-action="showAddScrap">+ Add Scrap Type</button>
+                            </div>
+                            <div id="scrapTypesList">
+                                <!-- Scrap types populated by JS -->
+                            </div>
+                            <div id="scrapForm" class="hidden" style="margin-top:12px;">
+                                <h4 id="scrapFormTitle">Add Scrap Type</h4>
+                                <div class="form-row">
+                                    <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="scrapName"></div>
+                                    <div class="form-group"><label class="form-label">Price per kg</label><input class="form-control" id="scrapPrice" type="number"></div>
+                                    <div class="form-group"><label class="form-label">Category</label><input class="form-control" id="scrapCategory"></div>
+                                </div>
+                                <div class="form-row" style="margin-top:8px;">
+                                    <div class="form-group" style="width:100%"><label class="form-label">Description</label><input class="form-control" id="scrapDescription" placeholder="Short description for customers"></div>
+                                </div>
+                                <div style="margin-top:8px;">
+                                    <button class="btn btn--primary" data-admin-action="saveScrap">Save</button>
+                                    <button class="btn btn--outline" data-admin-action="cancelScrap">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast hidden" id="toast">
+        <div class="toast-content">
+            <span class="toast-message" id="toastMessage"></span>
+            <button class="toast-close" id="toastClose">×</button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal hidden" id="confirmModal">
+        <div class="modal-overlay"></div>
+    <div class="modal-content" style="max-height:80vh;overflow:auto;">
+            <div class="modal-header">
+                <h3 id="modalTitle">Confirm Action</h3>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">Are you sure you want to proceed?</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn--outline" id="modalCancel">Cancel</button>
+                <button class="btn btn--primary" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+        <!-- Login Modal -->
+        <div class="modal hidden" id="loginModal">
+            <div class="modal-overlay"></div>
+            <div class="modal-content" style="max-height:80vh;overflow:auto;">
+                <div class="modal-header">
+                    <h3><span data-i18n="signIn">Sign in</span></h3>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label"><span data-i18n="phone">Phone number</span></label>
+                    <input id="modalLoginPhone" type="tel" placeholder="10-digit phone" maxlength="10" inputmode="numeric" pattern="\d{10}" title="Enter 10 digits" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)" style="width:100%; padding:8px; margin-bottom:8px;" data-i18n="phone">
+                    <label class="form-label"><span data-i18n="role">Role</span></label>
+                    <select id="modalLoginRole" style="width:100%; padding:8px; margin-bottom:8px;">
+                        <option value="">Select role (optional)</option>
+                        <option value="customer">Customer</option>
+                        <option value="dealer">Dealer</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn--outline" id="modalLoginCancel" data-i18n="cancel"><span data-i18n="cancel">Cancel</span></button>
+                    <button class="btn btn--primary" id="modalLoginSubmit" data-i18n="signIn"><span data-i18n="signIn">Sign in</span></button>
+                </div>
+            </div>
+        </div>
+
+    <!-- Set API base at deploy time. When developing locally, prefer the running local server. -->
+    <script>
+        // If opening the file locally (file://) or running on localhost, default to the local dev server.
+        (function(){
+            try {
+                var base = '';
+                if (window.location && window.location.protocol === 'file:') {
+                    base = 'http://localhost:3000';
+                } else if (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+                    base = window.location.protocol + '//' + window.location.host;
+                }
+                // Leave base as empty string for production deploys; deployment tooling can replace this line.
+                window.__SCRAP_API_BASE = base || '';
+                // If a developer previously set a broken explicit base in localStorage, remove it so the new logic takes effect
+                try { var ls = localStorage.getItem('scrapApiBase'); if (ls && (ls.indexOf('YOUR_BACKEND')!==-1 || ls.indexOf('your-backend')!==-1)) localStorage.removeItem('scrapApiBase'); } catch(e){}
+            } catch(e) { window.__SCRAP_API_BASE = ''; }
+        })();
+    </script>
+    <script src="app.js"></script>
+    <script src="app.api.js"></script>
+    <script>
+        // Ensure i18n is applied to any DOM nodes added after initial render.
+        (function(){
+            try {
+                setTimeout(function(){ try { if (window.i18n && window.i18n.applyToDOM) window.i18n.applyToDOM(); } catch(e){} }, 300);
+                setTimeout(function(){ try { if (window.i18n && window.i18n.applyToDOM) window.i18n.applyToDOM(); } catch(e){} }, 1200);
+            } catch(e){}
+        })();
+    </script>
+    <script>
+        // Auto-role helper: if ?autoRole=customer in URL, prefill phone and trigger the "Continue as Customer" action
+        (function(){
+            try {
+                function getQuery() { var q = {}; if (!location.search) return q; location.search.slice(1).split('&').forEach(function(p){ var s=p.split('='); q[decodeURIComponent(s[0])] = s[1] ? decodeURIComponent(s[1]) : ''; }); return q; }
+                var q = getQuery();
+                if (q.autoRole && q.autoRole.toLowerCase() === 'customer') {
+                    document.addEventListener('DOMContentLoaded', function(){
+                        try {
+                            if (q.phone) {
+                                var lp = document.getElementById('loginPhone'); if (lp) lp.value = q.phone.replace(/\D/g,'').slice(-10);
+                                var modalPhone = document.getElementById('modalLoginPhone'); if (modalPhone) modalPhone.value = q.phone.replace(/\D/g,'').slice(-10);
+                            }
+                            // find the first role-card with data-role="customer" and click its button
+                            var card = document.querySelector('.role-card[data-role="customer"]');
+                            if (card) {
+                                var btn = card.querySelector('button'); if (btn) { btn.click(); }
+                            }
+                            // Also attempt to click the top login button if present
+                            var loginBtn = document.getElementById('loginBtn'); if (loginBtn && document.getElementById('loginPhone') && document.getElementById('loginPhone').value) {
+                                loginBtn.click();
+                            }
+                        } catch(e) { console.warn('autoRole handler failed', e); }
+                    });
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <!-- Dealer Edit Modal -->
+    <div class="modal hidden" id="dealerEditModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-height:80vh;overflow:auto;width:90vw;max-width:900px;padding:16px;box-sizing:border-box;">
+            <div class="modal-header">
+                <h3 id="modalDealerTitle">Edit Dealer</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="modalDealerName"></div>
+                    <div class="form-group"><label class="form-label">Phone (10 digits)</label><input class="form-control" id="modalDealerPhone"></div>
+                </div>
+                <div class="form-row" style="margin-top:8px;">
+                    <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="modalDealerEmail"></div>
+                    <div class="form-group"><label class="form-label">Service Areas (comma separated)</label><input class="form-control" id="modalDealerServiceAreas" placeholder="e.g. North Delhi, Central Delhi"></div>
+                </div>
+                <div class="form-row" style="margin-top:8px;">
+                    <div class="form-group"><label class="form-label">Specialties (comma separated)</label><input class="form-control" id="modalDealerSpecialties" placeholder="e.g. Metal, Electronics"></div>
+                    <div class="form-group"><label class="form-label">Active</label><select class="form-control" id="modalDealerActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+                </div>
+                <div class="form-row" style="margin-top:8px;">
+                    <div class="form-group"><label class="form-label">Rating</label><input class="form-control" id="modalDealerRatingInput" type="number" step="0.1" min="0" max="5"></div>
+                    <div class="form-group"><label class="form-label">Completed Jobs</label><input class="form-control" id="modalDealerCompletedJobs" type="number" min="0"></div>
+                </div>
+                <div id="modalDealerSuccess" style="display:none;color:var(--color-app-secondary);margin-top:8px;font-weight:600;">Saved successfully</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn--outline" id="modalDealerCancel">Cancel</button>
+                <button class="btn btn--primary" id="modalDealerSave">Save</button>
+            </div>
+        </div>
+    </div>
+    <!-- Request Edit Modal (for dealer to edit customer requests) -->
+    <div class="modal hidden" id="requestEditModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-height:80vh;width:95vw;max-width:1100px;padding:12px;box-sizing:border-box;">
+            <div class="modal-header">
+                <h3 id="modalRequestTitle">Edit Request</h3>
+            </div>
+            <!-- Horizontal body: left = form (scrollable), right = map & images (scrollable) -->
+            <div class="modal-body" style="display:flex;gap:16px;align-items:flex-start;">
+                <div class="modal-left" style="flex:1 1 60%;overflow:auto;max-height:64vh;padding-right:8px;box-sizing:border-box;">
+                    <input type="hidden" id="modalRequestId">
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Customer Name</label><input class="form-control" id="modalRequestCustomerName"></div>
+                        <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="modalRequestPhone"></div>
+                    </div>
+                    <div class="form-row" style="margin-top:8px;">
+                        <div class="form-group" style="width:100%"><label class="form-label">Address</label><input class="form-control" id="modalRequestAddress"></div>
+                    </div>
+                    <div class="form-row" style="margin-top:8px;">
+                        <div class="form-group"><label class="form-label">Preferred Date</label><input class="form-control" id="modalRequestDate" type="date"></div>
+                        <div class="form-group"><label class="form-label">Preferred Time</label><select id="modalRequestTime" class="form-control"><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option></select></div>
+                    </div>
+                    <div class="form-row" style="margin-top:8px;">
+                        <div class="form-group" style="width:100%"><label class="form-label">Instructions</label><textarea id="modalRequestInstructions" class="form-control" rows="3"></textarea></div>
+                    </div>
+                    <div class="form-row" style="margin-top:8px;">
+                        <div class="form-group" style="width:100%"><label class="form-label">Scrap items</label>
+                            <div id="modalRequestScrapItemsContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+                            <div style="margin-top:6px; display:flex; gap:8px; align-items:center;"><button type="button" class="btn btn--outline" id="modalAddScrapItem">+ Add Item</button><div style="margin-left:auto;font-weight:600;" id="modalRequestEstimate">Estimated: ₹0</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-right" style="width:360px;min-width:240px;overflow:auto;max-height:64vh;box-sizing:border-box;padding-left:8px;border-left:1px solid rgba(0,0,0,0.06);">
+                    <div class="form-row" style="margin-bottom:8px;">
+                        <div class="form-group" style="width:48%;margin-right:4%;"><label class="form-label">Latitude</label><input class="form-control" id="modalRequestLat" placeholder="e.g. 28.5355"></div>
+                        <div class="form-group" style="width:48%;"><label class="form-label">Longitude</label><input class="form-control" id="modalRequestLng" placeholder="e.g. 77.3910"></div>
+                    </div>
+                    <div class="form-row" style="margin-bottom:8px;">
+                        <div class="form-group" style="width:100%;">
+                            <button type="button" class="btn btn--outline" id="modalRequestUpdateMap">Update Map</button>
+                            <div id="modalRequestMap" style="margin-top:8px; height:220px; border-radius:6px; overflow:hidden;"></div>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-bottom:8px;">
+                        <div class="form-group" style="width:100%"><label class="form-label">Existing Images (check to remove)</label><div id="modalRequestExistingImages" style="display:flex;flex-wrap:wrap;gap:8px;"></div></div>
+                    </div>
+                    <div class="form-row" style="margin-bottom:8px;">
+                        <div class="form-group" style="width:100%"><label class="form-label">Add Images</label><input type="file" id="modalRequestImageUpload" accept="image/*" multiple></div>
+                    </div>
+                    <div id="modalRequestNewImages" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+                    <div id="modalRequestImageError" style="color:var(--color-error);font-size:0.9em;display:none;margin-top:6px;"></div>
+                    <div id="modalRequestSuccess" style="display:none;color:var(--color-app-secondary);margin-top:8px;font-weight:600;">Saved successfully</div>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top:12px;">
+                <button class="btn btn--outline" id="modalRequestCancel">Cancel</button>
+                <button class="btn btn--primary" id="modalRequestSave">Save</button>
+            </div>
+        </div>
+    </div>
+    <!-- Diagnostic: ensure app exists and add delegated handlers for assign/accept/decline to avoid inline onclick fragility -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('Diagnostic: window.app exists?', !!window.app);
+        // Event delegation for admin assign button
+        document.body.addEventListener('click', function(e) {
+          const btn = e.target.closest('button');
+          if (!btn) return;
+          if (btn.matches('[data-action="assign"]')) {
+            const id = btn.getAttribute('data-request-id');
+            if (window.app && typeof window.app.assignDealer === 'function') {
+              window.app.assignDealer(id);
+            }
+          }
+          if (btn.matches('[data-action="accept"]')) {
+            const id = btn.getAttribute('data-request-id');
+            if (window.app && typeof window.app.updateRequestStatus === 'function') {
+              window.app.updateRequestStatus(id, 'En Route');
+            }
+          }
+          if (btn.matches('[data-action="decline"]')) {
+            const id = btn.getAttribute('data-request-id');
+            if (window.app && typeof window.app.updateRequestStatus === 'function') {
+              window.app.updateRequestStatus(id, 'Pending');
+            }
+          }
+                    if (btn.matches('[data-action="complete"]')) {
+                        const id = btn.getAttribute('data-request-id');
+                        if (window.app && typeof window.app.updateRequestStatus === 'function') {
+                            window.app.updateRequestStatus(id, 'Completed');
+                        }
+                    }
+        });
+      });
+    </script>
+   </body>
+ </html>

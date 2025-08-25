@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ScrapUp Preprod_3 Snapshot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <header id="header" style="display:none">
+        <button id="backBtn">Back</button>
+        <div style="float:right">
+            <button id="loginBtn">Login</button>
+            <button id="logoutBtn" style="display:none">Logout</button>
+        </div>
+    </header>
+
+    <main>
+        <section id="roleSelection" class="view">
+            <h2>Select Role</h2>
+            <div class="role-card" data-role="customer">Customer</div>
+            <div class="role-card" data-role="dealer">Dealer</div>
+            <div class="role-card" data-role="admin">Admin</div>
+        </section>
+
+        <section id="customerHome" class="view hidden">
+            <h2>Customer Home</h2>
+            <div id="priceGrid"></div>
+        </section>
+
+        <section id="dealerDashboard" class="view hidden">
+            <h2>Dealer Dashboard</h2>
+            <div id="dealerRequestsList"></div>
+        </section>
+
+        <section id="adminDashboard" class="view hidden">
+            <h2>Admin Dashboard</h2>
+            <div id="adminRequestsList"></div>
+        </section>
+    </main>
+
+    <div id="loginModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Login</h3>
+            <input id="modalLoginPhone" placeholder="Phone">
+            <select id="modalLoginRole">
+                <option value="">Select role</option>
+                <option value="customer">Customer</option>
+                <option value="dealer">Dealer</option>
+                <option value="admin">Admin</option>
+            </select>
+            <div>
+                <button id="modalLoginSubmit">Login</button>
+                <button id="modalLoginCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm</h3>
+            <p id="modalMessage">Are you sure?</p>
+            <div>
+                <button id="modalConfirm">OK</button>
+                <button id="modalCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"><span id="toastMessage"></span><button id="toastClose">x</button></div>
+
+    <script src="/app.api.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+Local Git push checklist (Windows PowerShell):
+
+# initialize and push
+git init
+git add .
+git commit -m "Initial commit - ScrapCollect demo"
+# create a repo on GitHub, then:
+git remote add origin https://github.com/<youruser>/<yourrepo>.git
+git branch -M main
+git push -u origin main
+
+# Notes:
+# - If you have large files, consider using git lfs and add rules to .gitattributes.
+# - If you want me to perform the push from this environment, provide a repo remote URL and an access token (not recommended here). Instead, run the commands locally.
+# - After pushing, connect the GitHub repo to Render and Netlify for automated deploys.

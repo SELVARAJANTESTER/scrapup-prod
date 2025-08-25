@@ -1,0 +1,342 @@
+{
+  "scrapTypes": [
+    {
+      "id": 1100,
+      "seq": 1100,
+      "name": "Copper (Grade A)",
+      "category": "Metal",
+      "pricePerKg": 720,
+      "description": "Clean copper wire and pipes",
+      "createdAt": 1754808319030
+    },
+    {
+      "id": 1101,
+      "seq": 1101,
+      "name": "Aluminum",
+      "category": "Metal",
+      "pricePerKg": 180,
+      "description": "Extrusion and cast aluminum",
+      "createdAt": 1754894719030
+    },
+    {
+      "id": 1102,
+      "seq": 1102,
+      "name": "Electronics",
+      "category": "E-waste",
+      "pricePerKg": 60,
+      "description": "Laptops, phones, small appliances",
+      "createdAt": 1754981119030
+    },
+    {
+      "id": 1103,
+      "seq": 1103,
+      "name": "Paper & Cardboard",
+      "category": "Paper",
+      "pricePerKg": 10,
+      "description": "Corrugated boxes and office paper",
+      "createdAt": 1755067519030
+    },
+    {
+      "id": 1104,
+      "seq": 1104,
+      "name": "Plastic (PET)",
+      "category": "Plastic",
+      "pricePerKg": 24,
+      "description": "PET bottles, clean and dry",
+      "createdAt": 1755153919030
+    },
+    {
+      "id": 1105,
+      "seq": 1105,
+      "name": "Glass",
+      "category": "Glass",
+      "pricePerKg": 6,
+      "description": "Bottles and jars (no ceramics)",
+      "createdAt": 1755240319030
+    },
+    {
+      "id": 1106,
+      "seq": 1106,
+      "name": "Lead-Acid Batteries",
+      "category": "Battery",
+      "pricePerKg": 95,
+      "description": "Car and inverter batteries",
+      "createdAt": 1755326719030
+    },
+    {
+      "id": 1107,
+      "seq": 1107,
+      "name": "Mixed E-waste",
+      "category": "E-waste",
+      "pricePerKg": 40,
+      "description": "Cables, adapters, misc boards",
+      "createdAt": 1755413119030
+    }
+  ],
+  "dealers": [
+    {
+      "id": 2100,
+      "seq": 2100,
+      "name": "ProGreen Recycling Co.",
+      "phone": "9876500011",
+      "email": "ops@progreen.example",
+      "serviceAreas": [
+        "Central",
+        "North"
+      ],
+      "specialties": [
+        "Metal",
+        "Electronics"
+      ],
+      "rating": 4.8,
+      "active": true,
+      "completedJobs": 512,
+      "createdAt": 1753425919030
+    },
+    {
+      "id": 2101,
+      "seq": 2101,
+      "name": "UrbanCycle Waste Mgmt",
+      "phone": "9876500022",
+      "email": "dispatch@urbancycle.example",
+      "serviceAreas": [
+        "South",
+        "East"
+      ],
+      "specialties": [
+        "Paper",
+        "Plastic"
+      ],
+      "rating": 4.6,
+      "active": true,
+      "completedJobs": 389,
+      "createdAt": 1753598719030
+    },
+    {
+      "id": 2102,
+      "seq": 2102,
+      "name": "MetroScrap Services",
+      "phone": "9876500033",
+      "email": "contact@metroscrap.example",
+      "serviceAreas": [
+        "West",
+        "Central"
+      ],
+      "specialties": [
+        "All Types"
+      ],
+      "rating": 4.7,
+      "active": true,
+      "completedJobs": 441,
+      "createdAt": 1753771519030
+    },
+    {
+      "id": 2103,
+      "seq": 2103,
+      "name": "RenewEarth Collectors",
+      "phone": "9876500044",
+      "email": "hello@renewearth.example",
+      "serviceAreas": [
+        "Downtown"
+      ],
+      "specialties": [
+        "Metal",
+        "Battery"
+      ],
+      "rating": 4.5,
+      "active": true,
+      "completedJobs": 271,
+      "createdAt": 1754289919030
+    }
+  ],
+  "users": [
+    {
+      "id": 9001,
+      "name": "System Admin",
+      "phone": "9990000001",
+      "role": "admin",
+      "token": "ad95c5e7c5c34f879ef4f4d90f0b6b8e2b2f6a3b3d5c1a0a"
+    },
+    {
+      "id": 9002,
+      "name": "ProGreen Ops",
+      "phone": "9876500011",
+      "role": "dealer",
+      "dealerId": 2100,
+      "token": "d7c0af5dd2f1412db2d12e0c0e1b437f5d0b1e2aa4c590b1"
+    },
+    {
+      "id": 9003,
+      "name": "UrbanCycle Desk",
+      "phone": "9876500022",
+      "role": "dealer",
+      "dealerId": 2101,
+      "token": "c51f9f7a2d5e4d19ad4eacb8a1f73de6b58c9e00a7c94b3a"
+    },
+    {
+      "id": 9004,
+      "name": "Alice Johnson",
+      "phone": "9884411111",
+      "role": "customer",
+      "token": "b1a3c5e7f9d2a4c6e8b0d1f2c3a4b5c6d7e8f9a0b1c2d3e4"
+    },
+    {
+      "id": 9005,
+      "name": "Ravi Kumar",
+      "phone": "9884422222",
+      "role": "customer",
+      "token": "aa22bb33cc44dd55ee66ff77889900aabbccddeeff112233"
+    }
+  ],
+  "requests": [
+    {
+      "id": 12001,
+      "seq": 12001,
+      "customerName": "Alice Johnson",
+      "phone": "9884411111",
+      "email": "alice@example.com",
+      "address": "12 Park Street, Central City",
+      "lat": 12.9716,
+      "lng": 77.5946,
+      "scrapTypes": [
+        {
+          "type": "Copper (Grade A)",
+          "typeId": 1100,
+          "quantity": 8
+        }
+      ],
+      "preferredDate": "2025-08-25",
+      "preferredTime": "morning",
+      "instructions": "Gate code 4521",
+      "status": "Scheduled",
+      "requestDate": "2025-08-24",
+      "dealerId": 2100,
+      "images": []
+    },
+    {
+      "id": 12002,
+      "seq": 12002,
+      "customerName": "Ravi Kumar",
+      "phone": "9884422222",
+      "email": "",
+      "address": "8 Lake View Rd, East End",
+      "lat": 13.0827,
+      "lng": 80.2707,
+      "scrapTypes": [
+        {
+          "type": "Electronics",
+          "typeId": 1102,
+          "quantity": 3
+        },
+        {
+          "type": "Mixed E-waste",
+          "typeId": 1107,
+          "quantity": 5
+        }
+      ],
+      "preferredDate": "2025-08-26",
+      "preferredTime": "afternoon",
+      "instructions": "",
+      "status": "New",
+      "requestDate": "2025-08-24",
+      "dealerId": 2101,
+      "images": []
+    },
+    {
+      "id": 12003,
+      "seq": 12003,
+      "customerName": "Alice Johnson",
+      "phone": "9884411111",
+      "email": "alice@example.com",
+      "address": "12 Park Street, Central City",
+      "lat": 12.9716,
+      "lng": 77.5946,
+      "scrapTypes": [
+        {
+          "type": "Plastic (PET)",
+          "typeId": 1104,
+          "quantity": 10
+        }
+      ],
+      "preferredDate": "2025-08-27",
+      "preferredTime": "evening",
+      "instructions": "Please call on arrival",
+      "status": "New",
+      "requestDate": "2025-08-24",
+      "dealerId": 2102,
+      "images": []
+    },
+    {
+      "id": 12004,
+      "seq": 12004,
+      "customerName": "Ravi Kumar",
+      "phone": "9884422222",
+      "email": "",
+      "address": "8 Lake View Rd, East End",
+      "lat": 13.0827,
+      "lng": 80.2707,
+      "scrapTypes": [
+        {
+          "type": "Lead-Acid Batteries",
+          "typeId": 1106,
+          "quantity": 2
+        }
+      ],
+      "preferredDate": "2025-08-28",
+      "preferredTime": "morning",
+      "instructions": "In basement parking",
+      "status": "Assigned",
+      "requestDate": "2025-08-24",
+      "dealerId": 2103,
+      "images": []
+    },
+    {
+      "id": 12005,
+      "seq": 12005,
+      "customerName": "Alice Johnson",
+      "phone": "9884411111",
+      "email": "alice@example.com",
+      "address": "12 Park Street, Central City",
+      "lat": 12.9716,
+      "lng": 77.5946,
+      "scrapTypes": [
+        {
+          "type": "Paper & Cardboard",
+          "typeId": 1103,
+          "quantity": 25
+        }
+      ],
+      "preferredDate": "2025-08-29",
+      "preferredTime": "afternoon",
+      "instructions": "",
+      "status": "Completed",
+      "requestDate": "2025-08-23",
+      "dealerId": 2101,
+      "images": []
+    },
+    {
+      "id": 12006,
+      "seq": 12006,
+      "customerName": "Ravi Kumar",
+      "phone": "9884422222",
+      "email": "",
+      "address": "8 Lake View Rd, East End",
+      "lat": 13.0827,
+      "lng": 80.2707,
+      "scrapTypes": [
+        {
+          "type": "Aluminum",
+          "typeId": 1101,
+          "quantity": 15
+        }
+      ],
+      "preferredDate": "2025-08-25",
+      "preferredTime": "evening",
+      "instructions": "Ring doorbell twice",
+      "status": "Cancelled",
+      "requestDate": "2025-08-24",
+      "dealerId": 2102,
+      "images": []
+    }
+  ]
+}

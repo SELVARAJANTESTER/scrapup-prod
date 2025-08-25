@@ -1,0 +1,21 @@
+{
+  "scrapTypes": [
+    {
+      "id": 1,
+      "name": "Metal Scrap",
+      "pricePerKg": 45,
+      "category": "Metal",
+      "description": "Iron, steel, aluminum, copper"
+    },
+    {
+      "id": 2,
+      "name": "Plastic Bottles",
+      "pricePerKg": 12,
+      "category": "Plastic",
+      "description": "PET bottles, containers"
+    }
+  ],
+  "dealers": [],
+  "requests": [],
+  "users": []
+}
