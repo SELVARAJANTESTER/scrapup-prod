@@ -2084,12 +2084,23 @@ class ScrapCollectApp {
 
                         ${request.images && request.images.length ? `<div class="request-images">${request.images.map(img => `<img src="${img}" alt="image" style="max-width:100px;max-height:80px;margin:4px;cursor:pointer;border-radius:6px;object-fit:cover" onclick="window.open('${img}','_blank')">`).join('')}</div>` : ''}
                         <div class="scrap-list">
-                            ${request.scrapTypes.map(item => `
+                            <div class="scrap-list-header">
+                                <div>Type</div>
+                                <div style="text-align:right">Rate</div>
+                                <div style="text-align:right">Qty</div>
+                                <div style="text-align:right">Subtotal</div>
+                            </div>
+                            ${request.scrapTypes.map(item => {
+                                const rate = (typeof item.appliedRate !== 'undefined' && item.appliedRate !== null) ? Number(item.appliedRate) : (this.scrapTypes.find(s => s.name === item.type)?.pricePerKg || 0);
+                                const subtotal = Math.round(rate * (item.quantity || 0));
+                                return `
                                 <div class="scrap-item-display">
-                                    <span>${item.type}</span>
-                                    <span>${item.quantity} kg</span>
+                                    <div class="scrap-type">${item.type}</div>
+                                    <div class="scrap-rate">₹${rate}/kg</div>
+                                    <div class="scrap-qty">${item.quantity} kg</div>
+                                    <div class="scrap-subtotal">₹${subtotal}</div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                         <div class="estimated-value">
                             <h4>${(window.i18n ? window.i18n.t('estimatedValue') : 'Estimated Value:')} ₹${this.calculateRequestValue(request)}</h4>
