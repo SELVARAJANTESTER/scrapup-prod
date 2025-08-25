@@ -2,7 +2,7 @@
 # Scrapup
 Scrapup web 
 =======
-ScrapCollect - Local Backend + Frontend
+PickMyScrap - Local Backend + Frontend
 
 This package contains a demo frontend and a lightweight Express backend that
 integrates with Firebase Firestore when a service account JSON is provided.
@@ -10,9 +10,9 @@ integrates with Firebase Firestore when a service account JSON is provided.
 Quick start (Windows PowerShell):
 
 1. Install dependencies
-   # Scrapup / ScrapCollect
+   # Scrapup / PickMyScrap
 
-   ScrapCollect is a small demo project that includes a static frontend and a
+   PickMyScrap is a small demo project that includes a static frontend and a
    lightweight Express backend. The backend can integrate with Firebase Firestore
    and Cloud Storage when a service account JSON is provided; otherwise the
    server runs in a local fallback mode using `app_data_fallback.json` for easy

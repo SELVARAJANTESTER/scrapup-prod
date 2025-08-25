@@ -1,5 +1,5 @@
-// ScrapCollect App JavaScript
-class ScrapCollectApp {
+// PickMyScrap App JavaScript
+class PickMyScrapApp {
     constructor() {
         this.currentRole = null;
         this.currentView = 'roleSelection';
@@ -59,7 +59,6 @@ class ScrapCollectApp {
                         // hide the Switch Role control for standalone customers
                         const rs = document.getElementById('roleSelector');
                         if (rs) rs.style.display = 'none';
-                        // show customer home immediately
                         try { this.showView('customerHome'); this.initCustomerView(); } catch(e){}
                     }
                 }

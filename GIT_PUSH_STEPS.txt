@@ -3,7 +3,7 @@ Local Git push checklist (Windows PowerShell):
 # initialize and push
 git init
 git add .
-git commit -m "Initial commit - ScrapCollect demo"
+git commit -m "Initial commit - PickMyScrap demo"
 # create a repo on GitHub, then:
 git remote add origin https://github.com/<youruser>/<yourrepo>.git
 git branch -M main

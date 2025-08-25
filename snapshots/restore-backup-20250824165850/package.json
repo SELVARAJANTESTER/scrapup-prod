@@ -1,7 +1,7 @@
 {
-  "name": "scrapcollect-backend",
+  "name": "pickmyscrap-backend",
   "version": "1.0.0",
-  "description": "Preprod_3 snapshot of ScrapCollect",
+  "description": "Preprod_3 snapshot of PickMyScrap",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -1,5 +1,5 @@
-// ScrapCollect App JavaScript
-class ScrapCollectApp {
+// PickMyScrap App JavaScript
+class PickMyScrapApp {
     constructor() {
         this.currentRole = null;
         this.currentView = 'roleSelection';
@@ -1932,5 +1932,5 @@ class ScrapCollectApp {
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new ScrapCollectApp();
+    window.app = new PickMyScrapApp();
 });

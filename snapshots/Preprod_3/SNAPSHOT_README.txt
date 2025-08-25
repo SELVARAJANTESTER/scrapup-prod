@@ -5,7 +5,7 @@ Location:
 
 Files included (current as of snapshot):
 - server.js            : Backend Express server (API + SSE + Firestore/fallback logic)
-- app.js               : Frontend application logic (ScrapCollectApp)
+- app.js               : Frontend application logic (PickMyScrapApp)
 - app.api.js           : Frontend API shim and helpers
 - home.html            : Main frontend HTML used by the app (renamed from index1.html)
 - package.json         : Project manifest and dependencies

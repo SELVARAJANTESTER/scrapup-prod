@@ -1,0 +1,5 @@
+﻿a5ac31e fix: add missing i18n.js script to enable language dropdown functionality
+054b26b test(dom): add customer DOM Puppeteer test and show rate/qty/subtotal in customer view
+336813a style: align customer scrap-list with dealer card header and row visuals
+08273b3 cleanup: remove embedded repo gitlinks from snapshots/
+7d601a6 customer: show per-item rate/qty/subtotal and align columns in scrap list

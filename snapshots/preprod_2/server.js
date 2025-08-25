@@ -1,6 +1,6 @@
 /*
   Simple Express server that uses Firebase Admin SDK (Firestore) as the backend
-  API for the ScrapCollect demo app.
+  API for the PickMyScrap app.
 
   Place your Firebase service account JSON at:
     ./firebase-service-account.json

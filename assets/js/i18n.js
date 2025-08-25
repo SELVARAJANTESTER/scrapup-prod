@@ -3,13 +3,13 @@
 (function(){
   const messages = {
     en: {
-      appTitle: 'ScrapCollect',
+  appTitle: 'PickMyScrap',
       logout: 'Logout',
       switchRole: 'Switch Role',
       back: 'Back',
   trackRequests: 'Track your pickup requests',
-      welcome: 'Welcome to ScrapCollect',
-      welcomeTag: 'Smart waste management made simple. Choose your role to get started:',
+  welcome: 'Welcome to PickMyScrap',
+  welcomeTag: 'Smart waste management made simple. Choose your role to get started:',
       customer: 'Customer',
       dealer: 'Dealer',
       admin: 'Admin',
@@ -49,7 +49,7 @@
   , assign: 'Assign'
     },
     ta: {
-      appTitle: 'ஸ்கிராப்கலெக்ட்',
+      appTitle: 'பிக்மைஸ்க்ராப்',
       logout: 'வெளியேறு',
       switchRole: 'பாத்திரம் மாற்று',
       back: 'பின்',
@@ -93,7 +93,7 @@
   , assign: 'ஒதுக்கவும்'
     },
     hi: {
-      appTitle: 'स्क्रैपकलेक्ट',
+      appTitle: 'पिकमाईस्क्रैप',
       logout: 'लॉगआउट',
       switchRole: 'भूमिका बदलें',
       back: 'वापस',
